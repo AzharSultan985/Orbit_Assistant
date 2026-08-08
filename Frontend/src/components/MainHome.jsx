@@ -17,9 +17,7 @@ import SystemContext from '../Context/orbitContext'
 
 
 export default function MainHome() {
-  const {systemInfo}=useContext(SystemContext)
-  console.log('systemInfo',systemInfo);
-  
+ 
   return (
     <>
     
@@ -54,32 +52,32 @@ Setting
 </div>
 
 
-<div class="grid grid-cols-2 grid-rows-3 gap-4 h-screen p-2">
+<div className="grid grid-cols-2 grid-rows-3 gap-4 h-screen p-2">
   {/* <!-- Top row --> */}
   {/* <div class="  ">   </div> */}
   {/* Top Center */}
-  <div class="    ">
+  <div className="    ">
     
 
     {<PcMetrics/>}
   </div>
-  <div class="    h-[45vh]">
+  <div className="    h-[45vh]">
 {<OrbitMap/>}
  
   </div>
 
   {/* <!-- Middle row --> */}
-  <div class="p-2 flex mb-4  justify-center">
+  <div className="p-2 flex mb-4  justify-center">
     <OrbitFace/>
     </div> 
-  <div class="  h-[30vh] mt-8 ">
+  <div className="  h-[30vh] mt-8 ">
 
      <AIProcessPanel state={"idle"} />
 </div>
 
   {/* <!-- Bottom row --> */}
-  <div class="  flex items-center justify-center"><UserPrompt/></div>
-  <div class=" border ">Bottom Center</div>
+  <div className="  flex items-center justify-center"><UserPrompt/></div>
+  <div className=" border ">Bottom Center</div>
   {/* <div class=" border flex items-center justify-center">Bottom Right</div> */}
 </div>
 

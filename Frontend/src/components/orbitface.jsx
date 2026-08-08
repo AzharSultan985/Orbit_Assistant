@@ -1,109 +1,172 @@
-import React, { useState } from "react";
-import { motion } from "framer-motion";
 
-export default function OrbitFace() {
-  const [state, setState] = useState("idle"); // "idle" | "listening" | "thinking" | "responding"
+import os from "os";
+import { exec } from "child_process";
 
-  return (
-    <div className="flex flex-col items-center justify-center h-full">
-      <div className="relative w-56 h-56 flex items-center justify-center">
-        {/* Head Circle */}
-        <motion.div
-          className="absolute w-56 h-56 rounded-full border-2 border-green-400 shadow-[0_0_30px_#00ff99] backdrop-blur-sm"
-          animate={state === "thinking" ? { rotate: 360 } : { rotate: 0 }}
-          transition={{ repeat: Infinity, duration: 10, ease: "linear" }}
-        />
+export const getSystemInfo = async (req, res) => {
+  try {
+    // =========================
+    // CPU
+    // =========================
 
-        {/* Idle Core Glow */}
-        {state === "idle" && (
-          <motion.div
-            className="absolute w-16 h-16 rounded-full bg-gradient-to-r from-green-400 to-cyan-500 blur-xl opacity-70"
-            animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
-            transition={{ repeat: Infinity, duration: 2 }}
-          />
-        )}
+    const cpus = os.cpus();
 
-        {/* Listening Pulse */}
-        {state === "listening" && (
-          <motion.div
-            className="absolute w-24 h-24 rounded-full border border-cyan-400/50"
-            animate={{ scale: [1, 1.3, 1], opacity: [1, 0.4, 1] }}
-            transition={{ repeat: Infinity, duration: 1.5 }}
-          />
-        )}
+    const cpuUsage = await new Promise((resolve) => {
+      const start = cpus.map((cpu) => ({
+        idle: cpu.times.idle,
+        total: Object.values(cpu.times).reduce(
+          (a, b) => a + b,
+          0
+        ),
+      }));
 
-        {/* Thinking Animation (3D energy rings) */}
-        {state === "thinking" && (
-          <>
-            {[...Array(3)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute rounded-full border border-green-400/40"
-                style={{ width: `${100 - i * 20}%`, height: `${100 - i * 20}%` }}
-                animate={{
-                  rotateX: [0, 360],
-                  rotateY: [0, 360],
-                  borderColor: ["#00ff99", "#00ffff", "#00ff99"],
-                }}
-                transition={{ repeat: Infinity, duration: 5 + i * 2, ease: "linear" }}
-              />
-            ))}
-          </>
-        )}
+      setTimeout(() => {
+        const end = os.cpus();
 
-        {/* Eyes */}
-        <div className="flex gap-12">
-          <motion.div
-            className="w-4 h-4 rounded-full bg-cyan-400 shadow-[0_0_15px_#00ffff]"
-            animate={state === "listening" ? { scale: [1, 1.5, 1] } : {}}
-            transition={{ repeat: Infinity, duration: 1 }}
-          />
-          <motion.div
-            className="w-4 h-4 rounded-full bg-cyan-400 shadow-[0_0_15px_#00ffff]"
-            animate={state === "listening" ? { scale: [1, 1.5, 1] } : {}}
-            transition={{ repeat: Infinity, duration: 1, delay: 0.2 }}
-          />
-        </div>
+        let idle = 0;
+        let total = 0;
 
-        {/* Response Wave */}
-        {state === "responding" && (
-          <motion.div
-            className="absolute bottom-0 flex gap-1"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            {[...Array(6)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="w-1 bg-green-400 rounded"
-                style={{ height: "10px" }}
-                animate={{
-                  height: ["10px", "30px", "10px"],
-                  opacity: [0.5, 1, 0.5],
-                }}
-                transition={{
-                  repeat: Infinity,
-                  duration: 0.8,
-                  delay: i * 0.15,
-                }}
-              />
-            ))}
-          </motion.div>
-        )}
+        end.forEach((cpu, index) => {
+          const currentIdle = cpu.times.idle;
 
-        {/* Static ORBIT Text */}
-        {/* <h2 className="absolute text-green-400 font-mono text-xl tracking-widest drop-shadow-[0_0_10px_#00ff99]">
-          ORBIT
-        </h2> */}
-      </div>
+          const currentTotal =
+            Object.values(cpu.times).reduce(
+              (a, b) => a + b,
+              0
+            );
 
-      {/* Control Buttons */}
-      <div className="mt-6 flex gap-3">
-        <button onClick={() => setState("idle")} className="px-3 py-1 border border-gray-600 text-xs hover:text-green-400">Idle</button>
-        <button onClick={() => setState("listening")} className="px-3 py-1 border border-green-500 text-xs hover:text-green-400">Listening</button>
-        <button onClick={() => setState("thinking")} className="px-3 py-1 border border-cyan-500 text-xs hover:text-cyan-400">Thinking</button>
-        <button onClick={() => setState("responding")} className="px-3 py-1 border border-blue-500 text-xs hover:text-blue-400">Responding</button>
-      </div>
-    </div>
-  );
-}
+          idle +=
+            currentIdle - start[index].idle;
+
+          total +=
+            currentTotal - start[index].total;
+        });
+
+        resolve(
+          total > 0
+            ? ((1 - idle / total) * 100)
+            : 0
+        );
+      }, 500);
+    });
+
+    // =========================
+    // RAM
+    // =========================
+
+    const totalRam = os.totalmem();
+    const freeRam = os.freemem();
+    const usedRam = totalRam - freeRam;
+
+    // =========================
+    // WINDOWS NETWORK
+    // =========================
+
+    const network = await new Promise(
+      (resolve, reject) => {
+        exec(
+          `powershell -NoProfile -Command "Get-NetAdapterStatistics | Select-Object Name,ReceivedBytes,SentBytes | ConvertTo-Json -Compress"`,
+
+          (error, stdout) => {
+            if (error) {
+              reject(error);
+              return;
+            }
+
+            try {
+              let data =
+                JSON.parse(stdout.trim());
+
+              // If only one adapter exists
+              if (!Array.isArray(data)) {
+                data = [data];
+              }
+
+              resolve(data);
+            } catch (err) {
+              reject(err);
+            }
+          }
+        );
+      }
+    );
+
+    // =========================
+    // Select active adapter
+    // =========================
+
+    const activeNetwork =
+      network.find(
+        (item) =>
+          Number(item.ReceivedBytes) > 0 ||
+          Number(item.SentBytes) > 0
+      );
+
+    // =========================
+    // RESPONSE
+    // =========================
+
+    return res.status(200).json({
+      success: true,
+
+      cpu: {
+        usage: Number(
+          cpuUsage.toFixed(2)
+        ),
+        cores: cpus.length,
+      },
+
+      ram: {
+        total: Number(
+          (
+            totalRam /
+            1024 ** 3
+          ).toFixed(2)
+        ),
+
+        used: Number(
+          (
+            usedRam /
+            1024 ** 3
+          ).toFixed(2)
+        ),
+
+        free: Number(
+          (
+            freeRam /
+            1024 ** 3
+          ).toFixed(2)
+        ),
+      },
+
+      network: {
+        name:
+          activeNetwork?.Name ||
+          "Unknown",
+
+        receivedBytes:
+          Number(
+            activeNetwork?.ReceivedBytes
+          ) || 0,
+
+        sentBytes:
+          Number(
+            activeNetwork?.SentBytes
+          ) || 0,
+      },
+    });
+
+  } catch (error) {
+    console.error(
+      "System Info Error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      error:
+        "Failed to get system information",
+      message: error.message,
+    });
+  }
+};
+

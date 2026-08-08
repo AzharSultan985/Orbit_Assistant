@@ -1,7 +1,9 @@
 {
   "dependencies": {
+    "cors": "^2.8.6",
     "express": "^5.2.1",
-    "os": "^0.1.2"
+    "os": "^0.1.2",
+    "systeminformation": "^5.33.1"
   },
   "name": "backend",
   "version": "1.0.0",

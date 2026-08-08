@@ -1,82 +1,519 @@
-import React, { useEffect, useState } from "react";
+
+import React, { useContext, useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import SystemContext from "../Context/orbitContext";
 
-export default function PcMetrics() {
-  const [metrics, setMetrics] = useState({ cpu: 22, ram: 48, disk: 66 });
+// ========================================
+// Live Graph Component
+// ========================================
 
-  // simulate metric updates (replace with backend data later)
-  useEffect(() => {
-    const id = setInterval(() => {
-      setMetrics({
-        cpu: Math.floor(Math.random() * 100),
-        ram: Math.floor(Math.random() * 100),
-        disk: Math.floor(Math.random() * 100),
-      });
-    }, 2500);
-    return () => clearInterval(id);
-  }, []);
+const LiveGraph = ({ data = [], maxValue = 100 }) => {
+  const width = 300;
+  const height = 45;
 
-
-  const MetricBox = ({ title, value, color }) => (
-    <div className="relative bg-black/50 border border-cyan-400/30 rounded-xl p-2 h-25
-    w-[150px]   shadow-[0_0_20px_rgba(0,255,209,0.15)] overflow-hidden">
-      {/* Sparkles */}
-      {[...Array(12)].map((_, i) => (
-        <motion.span
-          key={i}
-          className="absolute rounded-full bg-cyan-400"
-          style={{
-            top: `${Math.random() * 100}%`,
-            left: `${Math.random() * 100}%`,
-            width: `${1 + Math.random() * 2}px`,
-            height: `${1 + Math.random() * 2}px`,
-            boxShadow: "0 0 8px #00ffd1",
-          }}
-          animate={{ opacity: [0, 1, 0] }}
-          transition={{
-            repeat: Infinity,
-            duration: 2 + Math.random() * 2,
-            delay: Math.random() * 2,
-          }}
-        />
-      ))}
-
-      {/* Title */}
-      <h2 className="text-cyan-300 font-mono text-sm tracking-widest uppercase relative z-10">
-        {title}
-      </h2>
-
-      {/* Value */}
-      <div className="relative z-10 mt-0 mx-2 flex items-center justify-between">
-        <motion.span
-          key={value}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="font-mono text-3xl text-cyan-100"
-        >
-          {value}%
-        </motion.span>
-
-        {/* Bar */}
-        <div className="w-32 h-3  bg-gray-800/40 rounded-full border border-cyan-400/20 overflow-hidden">
-          <motion.div
-            className={`h-full rounded-full ${color}`}
-            initial={{ width: 0 }}
-            animate={{ width: `${value}%` }}
-            transition={{ duration: 0.8 }}
-          />
-        </div>
+  // Not enough data yet
+  if (data.length < 2) {
+    return (
+      <div className="relative w-full h-full flex items-center justify-center">
+        <span className="text-cyan-400/30 text-[9px] font-mono">
+          Collecting...
+        </span>
       </div>
-    </div>
-  );
+    );
+  }
+
+  // Convert values to SVG points
+  const points = data.map((value, index) => {
+    const x =
+      (index / (data.length - 1)) * width;
+
+    const safeValue = Math.max(
+      0,
+      Number(value) || 0
+    );
+
+    const y =
+      height -
+      (Math.min(safeValue, maxValue) / maxValue) *
+        height;
+
+    return `${x},${y}`;
+  });
+
+  const linePath = `M ${points.join(" L ")}`;
 
   return (
-    
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-0 mt-2  bg-black">
-      <MetricBox title="CPU Usage" value={metrics.cpu} color="bg-gradient-to-r from-cyan-400 to-purple-600" />
-      <MetricBox title="RAM Usage" value={metrics.ram} color="bg-gradient-to-r from-green-400 to-cyan-500" />
-      <MetricBox title="Disk Usage" value={metrics.disk} color="bg-gradient-to-r from-pink-500 to-cyan-400" />
+    <div className="relative w-full h-full overflow-hidden">
+
+      {/* Graph Grid */}
+
+      <div className="absolute inset-0 pointer-events-none">
+
+        <div className="absolute top-0 left-0 right-0 border-t border-cyan-400/10" />
+
+        <div className="absolute top-1/2 left-0 right-0 border-t border-cyan-400/10" />
+
+        <div className="absolute bottom-0 left-0 right-0 border-t border-cyan-400/10" />
+
+      </div>
+
+      {/* SVG */}
+
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="none"
+        className="absolute inset-0 w-full h-full"
+      >
+        <motion.path
+          d={linePath}
+          fill="none"
+          stroke="#22d3ee"
+          strokeWidth="2"
+          vectorEffect="non-scaling-stroke"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          initial={{
+            pathLength: 0,
+          }}
+          animate={{
+            pathLength: 1,
+          }}
+          transition={{
+            duration: 0.4,
+          }}
+        />
+      </svg>
+
+    </div>
+  );
+};
+
+
+// ========================================
+// Normal Metric Box
+// CPU / RAM
+// ========================================
+
+const MetricBox = ({
+  title,
+  value,
+  history,
+  unit = "%",
+  maxValue = 100,
+}) => {
+  return (
+    <div className="relative overflow-hidden p-4">
+
+      {/* Header */}
+
+      <div className="relative z-10 flex items-center justify-between">
+
+        <h2 className="text-cyan-300 font-mono text-sm tracking-widest uppercase">
+          {title}
+        </h2>
+
+        <motion.span
+          key={value}
+          initial={{
+            opacity: 0,
+            y: 5,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.3,
+          }}
+          className="font-mono text-2xl text-cyan-100"
+        >
+          {Number(value || 0).toFixed(1)}
+          {unit}
+        </motion.span>
+
+      </div>
+
+
+      {/* Graph */}
+
+      <div className="relative h-[65px] mt-3">
+
+        <LiveGraph
+          data={history}
+          maxValue={maxValue}
+        />
+
+      </div>
+
+
+      {/* Scale */}
+
+      <div className="flex justify-between text-[9px] text-cyan-400/20 font-mono">
+
+        <span>
+          {maxValue}
+          {unit}
+        </span>
+
+        <span>
+          0{unit}
+        </span>
+
+      </div>
+
+    </div>
+  );
+};
+
+
+// ========================================
+// Network Box
+// Signal + Download
+// ========================================
+
+const NetworkBox = ({
+  strength,
+  download,
+  strengthHistory,
+  downloadHistory,
+}) => {
+
+  // Calculate download graph scale
+
+  const maxDownload = Math.max(
+    ...downloadHistory,
+    Number(download) || 0,
+    1
+  );
+
+  const downloadMax =
+    Math.ceil(maxDownload / 5) * 5;
+
+
+  return (
+    <div className="relative overflow-hidden p-4">
+
+      {/* ================================= */}
+      {/* Header */}
+      {/* ================================= */}
+
+      <div className="relative z-10 flex items-center justify-between">
+
+        <h2 className="text-cyan-300 font-mono text-sm tracking-widest uppercase">
+          Network
+        </h2>
+
+        <motion.span
+          key={strength}
+          initial={{
+            opacity: 0,
+            y: 5,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.3,
+          }}
+          className="font-mono text-2xl text-cyan-100"
+        >
+          {Number(strength || 0).toFixed(0)}%
+        </motion.span>
+
+      </div>
+
+
+      {/* ================================= */}
+      {/* Signal Strength */}
+      {/* ================================= */}
+
+      <div className="mt-2">
+
+        <div className="flex items-center justify-between">
+
+          <span className="text-[9px] text-cyan-400/50 font-mono uppercase">
+            Signal Strength
+          </span>
+
+          <span className="text-[9px] text-cyan-300/50 font-mono">
+            {strength >= 80
+              ? "Excellent"
+              : strength >= 60
+              ? "Good"
+              : strength >= 40
+              ? "Fair"
+              : strength > 0
+              ? "Weak"
+              : "Unknown"}
+          </span>
+
+        </div>
+
+
+        {/* Signal Graph */}
+
+        <div className="relative h-[32px] mt-1">
+
+          <LiveGraph
+            data={strengthHistory}
+            maxValue={100}
+          />
+
+        </div>
+
+      </div>
+
+
+      {/* Divider */}
+
+      <div className="border-t border-cyan-400/10 my-1" />
+
+
+      {/* ================================= */}
+      {/* Download */}
+      {/* ================================= */}
+
+      <div>
+
+        <div className="flex items-center justify-between">
+
+          <span className="text-[9px] text-cyan-400/50 font-mono uppercase">
+            Download
+          </span>
+
+          <span className="text-[9px] text-cyan-300 font-mono">
+            {Number(download || 0).toFixed(2)} MB/s
+          </span>
+
+        </div>
+
+
+        {/* Download Graph */}
+
+        <div className="relative h-[32px] mt-1">
+
+          <LiveGraph
+            data={downloadHistory}
+            maxValue={downloadMax}
+          />
+
+        </div>
+
+      </div>
+
+
+      {/* Scale */}
+
+      <div className="flex justify-between text-[8px] text-cyan-400/20 font-mono mt-1">
+
+        <span>
+          {downloadMax} MB/s
+        </span>
+
+        <span>
+          0 MB/s
+        </span>
+
+      </div>
+
+    </div>
+  );
+};
+
+
+// ========================================
+// PC Metrics
+// ========================================
+
+export default function PcMetrics() {
+
+  const { systemInfo } =
+    useContext(SystemContext);
+
+
+  // ========================================
+  // Graph History
+  // ========================================
+
+  const [history, setHistory] = useState({
+    cpu: [],
+    ram: [],
+    strength: [],
+    download: [],
+  });
+
+
+  // ========================================
+  // Update History
+  // ========================================
+
+  useEffect(() => {
+
+    if (!systemInfo) return;
+
+
+    // ========================================
+    // CPU
+    // ========================================
+
+    const cpu = Number(
+      systemInfo?.cpu?.usage || 0
+    );
+
+
+    // ========================================
+    // RAM
+    // ========================================
+
+    const ramTotal = parseFloat(
+      systemInfo?.ram?.total || "0"
+    );
+
+    const ramUsed = parseFloat(
+      systemInfo?.ram?.used || "0"
+    );
+
+    const ram =
+      ramTotal > 0
+        ? (ramUsed / ramTotal) * 100
+        : 0;
+
+
+    // ========================================
+    // Network Strength
+    // ========================================
+
+    const strength = Number(
+      systemInfo?.network?.signal || 0
+    );
+
+
+    // ========================================
+    // Download
+    // ========================================
+
+    const download = Number(
+      systemInfo?.network?.download || 0
+    );
+
+
+    // ========================================
+    // Save History
+    // ========================================
+
+    setHistory((previous) => ({
+
+      cpu: [
+        ...previous.cpu,
+        cpu,
+      ].slice(-40),
+
+      ram: [
+        ...previous.ram,
+        ram,
+      ].slice(-40),
+
+      strength: [
+        ...previous.strength,
+        strength,
+      ].slice(-40),
+
+      download: [
+        ...previous.download,
+        download,
+      ].slice(-40),
+
+    }));
+
+  }, [systemInfo]);
+
+
+  // ========================================
+  // Current CPU
+  // ========================================
+
+  const cpu = Number(
+    systemInfo?.cpu?.usage || 0
+  );
+
+
+  // ========================================
+  // Current RAM
+  // ========================================
+
+  const ramTotal = parseFloat(
+    systemInfo?.ram?.total || "0"
+  );
+
+  const ramUsed = parseFloat(
+    systemInfo?.ram?.used || "0"
+  );
+
+  const ram =
+    ramTotal > 0
+      ? (ramUsed / ramTotal) * 100
+      : 0;
+
+
+  // ========================================
+  // Current Network
+  // ========================================
+
+  const strength = Number(
+    systemInfo?.network?.signal || 0
+  );
+
+  const download = Number(
+    systemInfo?.network?.download || 0
+  );
+
+
+  // ========================================
+  // Render
+  // ========================================
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-0 mt-2 bg-black">
+
+      {/* ================================= */}
+      {/* CPU */}
+      {/* ================================= */}
+
+      <MetricBox
+        title="CPU Usage"
+        value={cpu}
+        history={history.cpu}
+        unit="%"
+        maxValue={100}
+      />
+
+
+      {/* ================================= */}
+      {/* RAM */}
+      {/* ================================= */}
+
+      <MetricBox
+        title="RAM Usage"
+        value={ram}
+        history={history.ram}
+        unit="%"
+        maxValue={100}
+      />
+
+
+      {/* ================================= */}
+      {/* NETWORK */}
+      {/* ================================= */}
+
+      <NetworkBox
+        strength={strength}
+        download={download}
+        strengthHistory={history.strength}
+        downloadHistory={history.download}
+      />
+
     </div>
   );
 }
+
