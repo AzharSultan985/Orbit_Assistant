@@ -1,32 +1,23 @@
-
 import os from "os";
 import si from "systeminformation";
-
-// Keep previous network counters in memory
-let previousRx = null;
-let previousTx = null;
-let previousTime = null;
 
 export const getSystemInfo = async (req, res) => {
   try {
     // =========================
     // CPU
     // =========================
-
     const cpu = await si.currentLoad();
 
     // =========================
     // RAM
     // =========================
-
     const totalRam = os.totalmem();
     const freeRam = os.freemem();
     const usedRam = totalRam - freeRam;
 
     // =========================
-    // Wi-Fi
+    // WI-FI
     // =========================
-
     const wifiConnections = await si.wifiConnections();
 
     const connectedWifi = wifiConnections.find(
@@ -35,9 +26,15 @@ export const getSystemInfo = async (req, res) => {
         wifi.signalLevel !== undefined
     );
 
+    // =========================
+    // SIGNAL dBm
+    // =========================
     const signalDbm =
       connectedWifi?.signalLevel ?? null;
 
+    // =========================
+    // SIGNAL %
+    // =========================
     let signal = 0;
 
     if (signalDbm !== null) {
@@ -50,102 +47,20 @@ export const getSystemInfo = async (req, res) => {
       );
     }
 
-    // =========================
-    // Network Interfaces
-    // =========================
-
-    const interfaces = await si.networkInterfaces();
-
-    // Find active Wi-Fi / Ethernet interface
-    const activeInterface = interfaces.find(
-      (item) =>
-        item.operstate === "up" &&
-        !item.internal &&
-        item.iface &&
-        item.ip4
-    );
+    signal = Number(signal.toFixed(0));
 
     // =========================
-    // Network Stats
+    // DEBUG
     // =========================
-
-    const stats = await si.networkStats();
-
-    const activeStats = stats.find(
-      (item) =>
-        item.iface === activeInterface?.iface
-    );
-
-    // Total bytes
-    const currentRx =
-      Number(activeStats?.rx_bytes) || 0;
-
-    const currentTx =
-      Number(activeStats?.tx_bytes) || 0;
-
-    const currentTime = Date.now();
-
-    let download = 0;
-    let upload = 0;
+    // console.log("WIFI:", {
+    //   name: connectedWifi?.ssid || "Unknown",
+    //   signalDbm,
+    //   signal: `${signal}%`,
+    // });
 
     // =========================
-    // Calculate Speed
+    // RESPONSE
     // =========================
-
-    if (
-      previousRx !== null &&
-      previousTime !== null
-    ) {
-      const timeDiff =
-        (currentTime - previousTime) / 1000;
-
-      if (timeDiff > 0) {
-        const rxDiff =
-          currentRx - previousRx;
-
-        const txDiff =
-          currentTx - previousTx;
-
-        // Bytes/sec -> MB/sec
-        download =
-          rxDiff > 0
-            ? rxDiff /
-              timeDiff /
-              1024 /
-              1024
-            : 0;
-
-        upload =
-          txDiff > 0
-            ? txDiff /
-              timeDiff /
-              1024 /
-              1024
-            : 0;
-      }
-    }
-
-    // Save current values
-    previousRx = currentRx;
-    previousTx = currentTx;
-    previousTime = currentTime;
-
-    // =========================
-    // Debug
-    // =========================
-
-    console.log("NETWORK:", {
-      interface: activeInterface?.iface,
-      rxBytes: currentRx,
-      txBytes: currentTx,
-      download: download.toFixed(2),
-      upload: upload.toFixed(2),
-    });
-
-    // =========================
-    // Response
-    // =========================
-
     return res.status(200).json({
       success: true,
 
@@ -158,49 +73,29 @@ export const getSystemInfo = async (req, res) => {
 
       ram: {
         total: Number(
-          (
-            totalRam /
-            1024 ** 3
-          ).toFixed(2)
+          (totalRam / 1024 ** 3).toFixed(2)
         ),
 
         used: Number(
-          (
-            usedRam /
-            1024 ** 3
-          ).toFixed(2)
+          (usedRam / 1024 ** 3).toFixed(2)
         ),
 
         free: Number(
-          (
-            freeRam /
-            1024 ** 3
-          ).toFixed(2)
+          (freeRam / 1024 ** 3).toFixed(2)
         ),
       },
 
+      // =========================
+      // NETWORK STRENGTH ONLY
+      // =========================
       network: {
         name:
           connectedWifi?.ssid ||
-          activeInterface?.iface ||
           "Unknown",
 
-        signal: Number(
-          signal.toFixed(0)
-        ),
+        signal,
 
         signalDbm,
-
-        download: Number(
-          download.toFixed(2)
-        ),
-
-        upload: Number(
-          upload.toFixed(2)
-        ),
-
-        downloadUnit: "MB/s",
-        uploadUnit: "MB/s",
       },
     });
 
@@ -212,10 +107,8 @@ export const getSystemInfo = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      error:
-        "Failed to get system information",
+      error: "Failed to get system information",
       message: error.message,
     });
   }
 };
-
