@@ -1,93 +1,78 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import SystemContext from "../Context/orbitContext";
+import { useContext } from "react";
 
-export default function AIProcessPanel({ state }) {
-  const [logs, setLogs] = useState([]);
+export default function AIProcessPanel() {
   const containerRef = useRef(null);
 
-  const logTemplates = {
-    idle: [
-      "System idle... awaiting voice input.",
-      "Background optimization running...",
-      "Neural cores in standby mode.",
-      "Listening module warmed up.",
-      "Environment scan complete.",
-      "Low-power diagnostic check passed.",
-    ],
-    listening: [
-      "Voice input channel opened.",
-      "Audio normalization active...",
-      "Detecting tone and frequency...",
-      "Speech-to-text engine ready.",
-      "Signal clarity: High.",
-    ],
-    thinking: [
-      "Analyzing intent vectors...",
-      "Fetching relevant datasets...",
-      "Optimizing neural inference...",
-      "Processing logic layers...",
-      "Cognitive sequence in progress...",
-    ],
-    responding: [
-      "Compiling natural response...",
-      "Refining context embeddings...",
-      "Applying language optimization...",
-      "Generating structured text...",
-      "Dispatching AI response...",
-    ],
-  };
+  const { logs } = useContext(SystemContext);
 
-  // Function to auto-scroll to bottom
+  // -----------------------------
+  // Auto scroll
+  // -----------------------------
   useEffect(() => {
     if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+      containerRef.current.scrollTop =
+        containerRef.current.scrollHeight;
     }
   }, [logs]);
-
-  // Random log generation based on state
-  useEffect(() => {
-    let interval;
-    if (state) {
-      interval = setInterval(() => {
-        const randomLogs =
-          logTemplates[state][
-            Math.floor(Math.random() * logTemplates[state].length)
-          ];
-        setLogs((prev) => [
-          ...prev.slice(-10),
-          `[${new Date().toLocaleTimeString()}] ${randomLogs}`,
-        ]);
-      }, 1200);
-    }
-    return () => clearInterval(interval);
-  }, [state]);
 
   return (
     <div
       className="
-                 w-120 h-45 bg-black/50 border border-green-500/40 rounded-md
-                 shadow-[0_0_10px_#00ff99] p-3 font-mono text-xs overflow-hidden
-                 backdrop-blur-sm select-none"
+        w-full
+        h-full
+        bg-black/50
+        border border-green-500/40
+        rounded-md
+        shadow-[0_0_10px_#00ff99]
+        p-3
+        font-mono
+        text-xs
+        overflow-hidden
+        backdrop-blur-sm
+        select-none
+      "
     >
-      <h3 className="text-green-400 font-semibold mb-1 tracking-widest">
-        🧠 AI Activity Monitor
+      <h3 className="text-green-400 font-semibold mb-2 tracking-widest">
+        AI ACTIVITY MONITOR
       </h3>
 
       <div
         ref={containerRef}
-        className=" overflow-y-auto text-green-300 space-y-0.5  "
+        className="
+          h-[calc(100%-28px)]
+          overflow-y-auto
+          text-green-300
+          space-y-1
+          scrollbar-custom
+        "
       >
-        <AnimatePresence>
-          {logs.map((log, i) => (
+        <AnimatePresence initial={false}>
+          {logs.map((log) => (
             <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              key={log.id}
+              initial={{
+                opacity: 0,
+                x: -8,
+              }}
+              animate={{
+                opacity: 1,
+                x: 0,
+              }}
+              exit={{
+                opacity: 0,
+              }}
+              transition={{
+                duration: 0.2,
+              }}
               className="text-[11px] leading-tight"
             >
-              {log}
+              <span className="text-green-500">
+                [{log.timestamp}]
+              </span>{" "}
+              <span>{log.message}</span>
             </motion.div>
           ))}
         </AnimatePresence>

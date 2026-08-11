@@ -1,106 +1,151 @@
-import React, { useEffect, useState, useRef } from "react";
+
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import ChooseMIC_Lis from "../chooseMIC";
 
 export default function OrbitRes() {
-  
-  const [displayedText, setDisplayedText] = useState("");
+  const [userPrompt, setUserPrompt] = useState("");
+  const [messages, setMessages] = useState([]);
+
   const containerRef = useRef(null);
 
-  // Full response text (can be multi-line & long)
-  const response = `
-      No Response yet
-`;
-
-  // Typing effect logic
-  useEffect(() => {
-    let i = 0;
-    const interval = setInterval(() => {
-      setDisplayedText((prev) => prev + response.charAt(i));
-      i++;
-      if (i >= response.length) clearInterval(interval);
-    }, 40); // typing speed (ms per letter)
-    return () => clearInterval(interval);
-  }, []);
-
-  // Auto-scroll to bottom whenever text updates
+  // Scroll to latest message
   useEffect(() => {
     if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+      containerRef.current.scrollTop =
+        containerRef.current.scrollHeight;
     }
-  }, [displayedText]);
+  }, [messages]);
 
-  // Sparkles generator
-  const Sparkles = ({ count = 10 }) =>
-    [...Array(count)].map((_, i) => (
-      <motion.span
-        key={i}
-        className="absolute rounded-full bg-cyan-300"
-        style={{
-          top: `${Math.random() * 100}%`,
-          left: `${Math.random() * 100}%`,
-          width: `${1 + Math.random() * 2}px`,
-          height: `${1 + Math.random() * 2}px`,
-          boxShadow: "0 0 6px #00ffe7",
-        }}
-        animate={{ opacity: [0, 1, 0] }}
-        transition={{
-          repeat: Infinity,
-          duration: 1.8 + Math.random() * 2,
-          delay: Math.random() * 2,
-        }}
-      />
-    ));
+  const handleSend = () => {
+    const text = userPrompt.trim();
+
+    if (!text) return;
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        type: "user",
+        text,
+      },
+    ]);
+
+    setUserPrompt("");
+  };
 
   return (
-    <>
-    <section className="relative border h-[50vh] w-[50vh] bg-[#0c1c1f] shadow-[0_0_30px_rgba(0,255,209,0.25)] overflow-hidden border-[#28bebe] rounded-[10px] p-4 flex flex-col">
-      {/* sparkles layer */}
-      <div className="absolute inset-0 pointer-events-none">
-        <Sparkles count={16} />
+    <section className="relative w-full h-full bg-[#0c1c1f] overflow-hidden flex flex-col">
+
+      {/* =====================================================
+          TOP — ORBIT
+      ===================================================== */}
+      <div className="shrink-0 px-4 pt-4">
+        <h2
+          className="font-mono text-xl font-extrabold text-cyan-300
+          tracking-widest drop-shadow-[0_0_8px_#00ffd1,0_0_18px_#00ffe7]"
+        >
+          ORBIT
+        </h2>
       </div>
 
-      {/* ORBIT title */}
-      <h2
-        className="font-mono text-1xl font-extrabold text-cyan-300 tracking-widest relative z-10 
-                   drop-shadow-[0_0_8px_#00ffd1,0_0_18px_#00ffe7] animate-pulse"
-        style={{ fontFamily: '"JetBrains Mono", monospace' }}
+      {/* =====================================================
+          MESSAGES
+          Empty when there are no messages
+      ===================================================== */}
+      <div
+        ref={containerRef}
+        className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-3 scrollbar-custom"
       >
-        ORBIT
-      </h2>
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`flex ${
+              message.type === "user"
+                ? "justify-end"
+                : "justify-start"
+            }`}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`
+                max-w-[80%]
+                px-4
+                py-2.5
+                rounded-2xl
+                font-mono
+                text-sm
+                leading-relaxed
+                whitespace-pre-wrap
+                ${
+                  message.type === "user"
+                    ? "bg-cyan-500/10 border border-cyan-400/30 text-cyan-200 rounded-br-sm"
+                    : "bg-green-500/10 border border-green-400/30 text-green-300 rounded-bl-sm"
+                }
+              `}
+            >
+              {message.text}
+            </motion.div>
+          </div>
+        ))}
+      </div>
 
-      {/* RESPONSE heading */}
-      <motion.h2
-        className="mt-1 font-mono text-lg text-green-400 relative z-10 
-                   tracking-widest drop-shadow-[0_0_6px_#00ff99]"
-        style={{ fontFamily: '"JetBrains Mono", monospace' }}
-        animate={{ opacity: [0.7, 1, 0.7] }}
-        transition={{ repeat: Infinity, duration: 1.5 }}
-      >
-        RESPONSE :
-      </motion.h2>
+      {/* =====================================================
+          BOTTOM — INPUT
+      ===================================================== */}
+      <div className="shrink-0 p-3 border-t border-[#28bebe]/30">
+        <div className="flex gap-2">
 
-      {/* Scrollable response area */}
-  <div ref={containerRef}
-  className=" overflow-y-auto mt-[-8px]  z-10 scrollbar-custom">
+          <input
+            type="text"
+            value={userPrompt}
+            onChange={(e) => setUserPrompt(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleSend();
+              }
+            }}
+            placeholder="Ask Orbit..."
+            className="
+              flex-1
+              min-w-0
+              h-10
+              px-3
+              rounded-xl
+              bg-black/40
+              border border-[#28bebe]/50
+              text-cyan-200
+              placeholder:text-slate-600
+              outline-none
+              font-mono
+              text-sm
+              focus:border-cyan-400
+              focus:shadow-[0_0_10px_rgba(0,255,209,0.2)]
+            "
+          />
 
-  <p
-    className="font-mono text-sm leading-relaxed text-green-300 whitespace-pre-wrap
-               "
-    style={{ fontFamily: '"JetBrains Mono", monospace' }}
-  >
-    {displayedText}
-    {/* Blinking cursor */}
-    <motion.span
-      className="ml-1 inline-block w-2 h-4 bg-green-400 align-middle"
-      animate={{ opacity: [0, 1, 0] }}
-      transition={{ repeat: Infinity, duration: 0.8 }}
-    />
-  </p>
-</div>
+          <button
+            onClick={handleSend}
+            className="
+              h-10
+              px-4
+              shrink-0
+              rounded-xl
+              border border-green-400/70
+              text-green-400
+              font-mono
+              text-sm
+              hover:bg-green-400
+              hover:text-black
+              transition-all
+            "
+          >
+            Send
+          </button>
+
+        </div>
+      </div>
 
     </section>
-
-</>
   );
 }

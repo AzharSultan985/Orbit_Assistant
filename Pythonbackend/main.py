@@ -1,262 +1,38 @@
-
 import asyncio
-import queue
-import time
+import threading
+import speech_recognition as sr
 
-import numpy as np
-import sounddevice as sd
-from faster_whisper import WhisperModel
+import server
 
 from commands.speak import speak
-
+from controller.ollama import ask_ollama
+from controller.orbitMode import OrbitMode
+from controller.orbit_log import orbit_log
 
 # =====================================================
-# WHISPER
+# START FASTAPI SERVER
 # =====================================================
 
-WHISPER_PATH = r"G:\Orbit Ai Assistant\Models\whisper"
+def start_api_server():
 
-print("Loading local Whisper model...")
+    orbit_log("Starting Orbit Python API...")
 
-model = WhisperModel(
-    "base",
-    device="cpu",
-    compute_type="int8",
-    download_root=WHISPER_PATH
+    server.start_server()
+
+
+api_thread = threading.Thread(
+    target=start_api_server,
+    daemon=True
 )
 
-print("Whisper model ready.")
+api_thread.start()
 
 
 # =====================================================
-# AUDIO SETTINGS
+# ORBIT STATE
 # =====================================================
 
-SAMPLE_RATE = 16000
-CHANNELS = 1
-
-# Audio chunk size
-BLOCK_SIZE = 1024
-
-# How much silence ends the command
-SILENCE_DURATION = 2.0
-
-# Minimum volume considered as speech
-ENERGY_THRESHOLD = 0.015
-
-
-# =====================================================
-# AUDIO QUEUE
-# =====================================================
-
-audio_queue = queue.Queue()
-
-
-def audio_callback(indata, frames, time_info, status):
-
-    if status:
-        print("Audio:", status)
-
-    audio_queue.put(indata.copy())
-
-
-# =====================================================
-# GET AUDIO FROM MICROPHONE
-# =====================================================
-
-def get_audio():
-
-    audio_queue.queue.clear()
-
-    stream = sd.InputStream(
-        samplerate=SAMPLE_RATE,
-        channels=CHANNELS,
-        blocksize=BLOCK_SIZE,
-        callback=audio_callback
-    )
-
-    return stream
-
-
-# =====================================================
-# CALCULATE AUDIO ENERGY
-# =====================================================
-
-def is_speech(audio):
-
-    energy = np.sqrt(
-        np.mean(
-            np.square(audio)
-        )
-    )
-
-    return energy > ENERGY_THRESHOLD
-
-
-# =====================================================
-# WAIT FOR ORBIT
-# =====================================================
-
-def wait_for_wake_word():
-
-    print("Listening for 'Orbit'...")
-
-    with get_audio() as stream:
-
-        audio_buffer = []
-        last_check = time.time()
-
-        while True:
-
-            try:
-
-                data = audio_queue.get(
-                    timeout=1
-                )
-
-                audio_buffer.append(data)
-
-            except queue.Empty:
-
-                continue
-
-            # Check every ~2 seconds
-            if time.time() - last_check < 2:
-
-                continue
-
-            last_check = time.time()
-
-            if not audio_buffer:
-
-                continue
-
-            audio = np.concatenate(
-                audio_buffer,
-                axis=0
-            )
-
-            audio_buffer = []
-
-            # Whisper needs float32
-            audio = audio.flatten().astype(
-                np.float32
-            )
-
-            segments, info = model.transcribe(
-                audio,
-                beam_size=5,
-                vad_filter=True,
-                temperature=0
-            )
-
-            text = " ".join(
-                segment.text
-                for segment in segments
-            ).strip().lower()
-
-            if not text:
-
-                continue
-
-            print(
-                f"Heard: {text}"
-            )
-
-            if "orbit" in text:
-
-                return
-
-
-# =====================================================
-# LISTEN TO FULL COMMAND
-# =====================================================
-
-def listen_for_command():
-
-    print("Orbit activated. Listening...")
-
-    audio_buffer = []
-
-    speech_started = False
-
-    last_speech_time = None
-
-    with get_audio() as stream:
-
-        while True:
-
-            try:
-
-                data = audio_queue.get(
-                    timeout=1
-                )
-
-            except queue.Empty:
-
-                continue
-
-            audio_buffer.append(data)
-
-            # Check volume
-            if is_speech(data):
-
-                speech_started = True
-
-                last_speech_time = time.time()
-
-            # Stop after 2 seconds of silence
-            if speech_started:
-
-                if (
-                    last_speech_time
-                    and
-                    time.time() - last_speech_time
-                    >= SILENCE_DURATION
-                ):
-
-                    break
-
-    if not audio_buffer:
-
-        return None
-
-    audio = np.concatenate(
-        audio_buffer,
-        axis=0
-    )
-
-    audio = audio.flatten().astype(
-        np.float32
-    )
-
-    print("Converting speech to text...")
-
-    # =================================================
-    # LOCAL WHISPER
-    # =================================================
-
-    segments, info = model.transcribe(
-        audio,
-        beam_size=5,
-        vad_filter=True,
-        temperature=0
-    )
-
-    text = " ".join(
-        segment.text
-        for segment in segments
-    ).strip()
-
-    if text:
-
-        print(
-            f"You said: {text}"
-        )
-
-        return text
-
-    return None
+orbit_active = False
 
 
 # =====================================================
@@ -265,14 +41,91 @@ def listen_for_command():
 
 async def processCommand(cmd):
 
-    print(
-        f"Command: {cmd}"
-    )
+    global orbit_active
+
+    orbit_log(f"\nCommand: {cmd}")
 
     cmd = cmd.lower().strip()
 
-    # Temporary test
-    await speak(cmd)
+
+    # =================================================
+    # IDLE MODE
+    # Only "Orbit" activates Orbit
+    # =================================================
+
+    if not orbit_active:
+
+        if cmd == "orbit":
+
+            orbit_active = True
+
+            await OrbitMode("listening")
+
+            await speak(
+                "Yes, I'm listening."
+            )
+
+        return
+
+
+    # =================================================
+    # STOP ORBIT
+    # =================================================
+
+    if cmd in [
+        "stop orbit",
+        "orbit stop",
+        "stop"
+    ]:
+
+        orbit_active = False
+
+        await OrbitMode("idle")
+
+        await speak(
+            "Okay."
+        )
+
+        return
+
+
+    # =================================================
+    # THINKING
+    # =================================================
+
+    await OrbitMode("thinking")
+
+    orbit_log(
+        f"Command for AI: {cmd}"
+    )
+
+
+    # =================================================
+    # OLLAMA
+    # =================================================
+
+    response = await asyncio.to_thread(
+        ask_ollama,
+        cmd
+    )
+
+
+    # =================================================
+    # SPEAK
+    # =================================================
+
+    if response:
+
+        await speak(response)
+
+
+    # =================================================
+    # LISTEN AGAIN
+    # =================================================
+
+    if orbit_active:
+
+        await OrbitMode("listening")
 
 
 # =====================================================
@@ -281,70 +134,187 @@ async def processCommand(cmd):
 
 async def main():
 
+    orbit_log("================================")
+    orbit_log("       ORBIT AI ASSISTANT")
+    orbit_log("================================")
+  
+    orbit_log("Python API started on:")
+    orbit_log("http://127.0.0.1:5000")
+    
+
+
+    # =================================================
+    # STARTUP SPEECH
+    # =================================================
+
     await speak(
         "Hello Azhar. Orbit is ready."
     )
 
+
+    await OrbitMode("idle")
+
+
+    # =================================================
+    # SPEECH RECOGNIZER
+    # =================================================
+
+    recognizer = sr.Recognizer()
+
+    recognizer.pause_threshold = 2.0
+    recognizer.phrase_threshold = 0.3
+    recognizer.non_speaking_duration = 0.8
+
+
+    # =================================================
+    # MICROPHONE CALIBRATION
+    # =================================================
+
+    orbit_log("Calibrating microphone...")
+
+    with sr.Microphone() as source:
+
+        recognizer.adjust_for_ambient_noise(
+            source,
+            duration=1
+        )
+
+    orbit_log("Microphone ready.")
+
+
+    # =================================================
+    # LISTEN LOOP
+    # =================================================
+
     while True:
 
-        # ---------------------------------------------
-        # WAIT FOR ORBIT
-        # ---------------------------------------------
+        try:
 
-        await asyncio.to_thread(
-            wait_for_wake_word
-        )
+            # =========================================
+            # CHECK MIC STATE
+            # =========================================
 
-        # ---------------------------------------------
-        # ORBIT DETECTED
-        # ---------------------------------------------
+            if not server.mic_enabled:
 
-        await speak(
-            "Yes, I am listening."
-        )
+                orbit_log(
+                    " Microphone disabled."
+                )
 
-        # ---------------------------------------------
-        # LISTEN TO COMMAND
-        # ---------------------------------------------
+                await OrbitMode("idle")
 
-        command = await asyncio.to_thread(
-            listen_for_command
-        )
+                await asyncio.sleep(0.1)
 
-        if not command:
+                continue
 
-            continue
 
-        # ---------------------------------------------
-        # EXIT
-        # ---------------------------------------------
+            # =========================================
+            # MIC ENABLED
+            # =========================================
 
-        if command in [
-            "exit",
-            "quit",
-            "stop orbit"
-        ]:
+            with sr.Microphone() as source:
 
-            await speak(
-                "Goodbye Azhar."
+                if orbit_active:
+
+                    orbit_log(
+                        " Listening for command..."
+                    )
+
+                else:
+
+                    orbit_log(
+                        " Listening for 'Orbit'..."
+                    )
+
+
+                audio = recognizer.listen(
+                    source,
+                    timeout=5
+                )
+
+
+            # =========================================
+            # SPEECH → TEXT
+            # =========================================
+
+            orbit_log(
+                "Converting speech..."
             )
 
-            break
 
-        # ---------------------------------------------
-        # PROCESS
-        # ---------------------------------------------
+            word = recognizer.recognize_google(
+                audio
+            )
 
-        await processCommand(
-            command
-        )
+
+            orbit_log(
+                f"You said: {word}"
+            )
+
+
+            # =========================================
+            # PROCESS COMMAND
+            # =========================================
+
+            await processCommand(word)
+
+
+        # =============================================
+        # NO SPEECH
+        # =============================================
+
+        except sr.WaitTimeoutError:
+
+            orbit_log(
+                "No speech detected."
+            )
+
+
+        # =============================================
+        # UNKNOWN SPEECH
+        # =============================================
+
+        except sr.UnknownValueError:
+
+            orbit_log(
+                "Could not understand audio."
+            )
+
+
+        # =============================================
+        # GOOGLE API ERROR
+        # =============================================
+
+        except sr.RequestError as e:
+
+            orbit_log(
+                f"Speech recognition error: {e}"
+            )
+
+
+        # =============================================
+        # OTHER ERROR
+        # =============================================
+
+        except Exception as e:
+
+            orbit_log(
+                f"Error: {e}"
+            )
+
+            await asyncio.sleep(0.5)
 
 
 # =====================================================
-# START
+# START ORBIT
 # =====================================================
 
 if __name__ == "__main__":
 
-    asyncio.run(main())
+    try:
 
+        asyncio.run(main())
+
+    except KeyboardInterrupt:
+
+        
+        orbit_log("Orbit stopped.")

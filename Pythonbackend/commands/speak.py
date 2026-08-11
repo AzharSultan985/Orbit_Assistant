@@ -1,106 +1,90 @@
-
-import os
-
-# =====================================================
-# HUGGING FACE CACHE
-# MUST BE SET BEFORE IMPORTING KOKORO
-# =====================================================
-
-HF_HOME = r"G:\Orbit Ai Assistant\Models\huggingface"
-
-os.environ["HF_HOME"] = HF_HOME
-os.environ["HF_HUB_CACHE"] = os.path.join(HF_HOME, "hub")
-os.environ["TRANSFORMERS_CACHE"] = os.path.join(HF_HOME, "transformers")
-
-# Create cache directories
-os.makedirs(os.environ["HF_HUB_CACHE"], exist_ok=True)
-os.makedirs(os.environ["TRANSFORMERS_CACHE"], exist_ok=True)
-
-
-# =====================================================
-# IMPORTS
-# =====================================================
-
-from kokoro import KPipeline
-import soundfile as sf
-import pygame
+import edge_tts
 import asyncio
+import os
 import uuid
+import pygame
+from controller.orbit_log import orbit_log
 
+from controller.orbitMode import OrbitMode
 
-# =====================================================
-# KOKORO
-# =====================================================
+VOICE = "en-IN-NeerjaNeural"
 
-print("Loading Orbit voice engine...")
+pygame.mixer.init()
 
-pipeline = KPipeline(lang_code="a")
-
-ORBIT_VOICE = "am_fenrir"
-ORBIT_SPEED = 0.92
-
-print("Orbit voice engine ready.")
-
-
-# =====================================================
-# SPEAK
-# =====================================================
 
 async def speak(text):
 
-    print(f"ORBIT: {text}")
+    if not text:
+        return
 
-    filename = os.path.join(
-        HF_HOME,
-        f"orbit_{uuid.uuid4().hex}.wav"
-    )
+    filename = f"orbit_{uuid.uuid4().hex}.mp3"
 
     try:
 
-        # Generate speech
-        generator = pipeline(
+        orbit_log(f"ORBIT: {text}")
+
+        # -----------------------------------------
+        # Generate TTS
+        # -----------------------------------------
+
+        communicate = edge_tts.Communicate(
             text,
-            voice=ORBIT_VOICE,
-            speed=ORBIT_SPEED
+            voice=VOICE
         )
 
-        # Save generated audio
-        for _, _, audio in generator:
+        await communicate.save(filename)
 
-            sf.write(
-                filename,
-                audio,
-                24000
-            )
+        # -----------------------------------------
+        # Orbit speaking
+        # -----------------------------------------
 
-        # Initialize pygame once
-        if not pygame.mixer.get_init():
-            pygame.mixer.init()
+        await OrbitMode("speaking")
 
+        # -----------------------------------------
         # Play
+        # -----------------------------------------
+
         pygame.mixer.music.load(filename)
         pygame.mixer.music.play()
 
-        # Wait until finished
         while pygame.mixer.music.get_busy():
-            await asyncio.sleep(0.05)
-
-        pygame.mixer.music.stop()
+            await asyncio.sleep(0.02)
 
     except Exception as e:
 
-        print("Speech error:", e)
+        orbit_log(f"Speech error: {e}")
 
     finally:
 
+        # -----------------------------------------
+        # Stop + release MP3
+        # -----------------------------------------
+
         try:
+            pygame.mixer.music.stop()
             pygame.mixer.music.unload()
         except Exception:
             pass
+
+        # -----------------------------------------
+        # Delete generated MP3
+        # -----------------------------------------
 
         if os.path.exists(filename):
 
             try:
                 os.remove(filename)
+                orbit_log(f"Deleted: {filename}")
+
             except PermissionError:
-                pass
+
+                orbit_log(
+                    f"Could not delete {filename} "
+                    "(file still in use)"
+                )
+
+        # -----------------------------------------
+        # Back to listening
+        # -----------------------------------------
+
+        await OrbitMode("listening")

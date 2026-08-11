@@ -1,100 +1,68 @@
-import React, { useContext, useEffect } from "react";
-import SidebarLayout from "./sidebar";
-import ChooseToPrompt from "./orbitresponse";
-import PcMetrics from "./pcmatrices";
+
+import React from "react";
+
 import OrbitRes from "./orbitresponse";
+import PcMetrics from "./pcmatrices";
 import OrbitMap from "./Map";
 import Dailytask from "./dailytask";
-import ChooseMIC_Lis from "../chooseMIC";
-import ChooseSpeak from "../chooseSpeaker";
+import ChooseMIC_Lis from "./chooseMIC";
+import NetworkAndSettings from "./systemcontrol";
 import OrbitFace from "./orbitface";
 import UserPrompt from "./userPrompt";
-
-import NetworkAndSettings from "./systemcontrol";
 import AIProcessPanel from "./Atprocesspanel";
-import SystemContext from '../Context/orbitContext'
-
-
 
 export default function MainHome() {
- 
   return (
-    <>
-    
-    <section className="w-screen h-screen flex   flex-row">
-{/* <div className="w-screen h-7 border-b-2 border-green-400">
-<div className="text-green-500 font-semibold px-4">
-Setting
-<i class="fa fa-cogs" ></i>
+    <main className="w-screen h-screen box-border overflow-hidden text-white p-3">
 
-</div>
-</div>
-  */}
-    {/* <i class="fa fa-cogs" aria-hidden="true"></i> */}
-<div >
+      <div className="w-full h-full min-h-0 grid grid-cols-[0.8fr_1fr_0.75fr] gap-3">
 
-<div className="   h-[50vh] w-[55vh] px-2"><OrbitRes/>
+        {/* COLUMN 1 — ORBIT CHAT */}
+       
+<section className="min-w-0 min-h-0 h-full grid grid-rows-[1fr_0.2fr_1fr] gap-3">
 
+          <div className="rounded-2xl mr-2 overflow-hidden">
+            <OrbitMap />
+          </div>
 
-</div>
+          <div className=" rounded-2xl flex items-center justify-center overflow-hidden">
+            <div className="flex items-center justify-center gap-8">
+              <NetworkAndSettings />
+              <ChooseMIC_Lis />
+            </div>
+          </div>
 
- {/* Mic Toggle fixed bottom-center */}
-  <div className="  m-1  w-[51vh] h-12 items-center flex justify-center  gap-6 ">
-<NetworkAndSettings />
-    <ChooseMIC_Lis />
-  </div>
+          <div className="rounded-2xl verflow-hidden">
+            <Dailytask />
+          </div>
 
-<div className=" h-[41vh] w-[60vh] justify-center items-center flex">
-  {<Dailytask></Dailytask>}
-</div>
+        </section>
 
 
-</div>
+        {/* COLUMN 2 — METRICS / FACE / USER */}
+        <section className="min-w-0 min-h-0 h-full grid  grid-rows-[0.5fr_1.5fr_0.8fr] gap-3">
+
+          <div className=" rounded-2xl  overflow-hidden">
+            <PcMetrics />
+          </div>
+
+          <div className=" rounded-2xl  flex items-center justify-center overflow-hidden">
+            <OrbitFace />
+          </div>
+
+          <div className=" rounded-2xl border border-slate-800 overflow-hidden">
+            <AIProcessPanel />
+          </div>
+
+        </section>
 
 
-<div className="grid grid-cols-2 grid-rows-3 gap-4 h-screen p-2">
-  {/* <!-- Top row --> */}
-  {/* <div class="  ">   </div> */}
-  {/* Top Center */}
-  <div className="    ">
-    
+        {/* COLUMN 3 — MAP / CONTROLS / TASKS */}
+         <section className="min-w-0 min-h-0 h-full rounded-2xl overflow-hidden">
+          <OrbitRes />
+        </section>
+      </div>
 
-    {<PcMetrics/>}
-  </div>
-  <div className="    h-[45vh]">
-{<OrbitMap/>}
- 
-  </div>
-
-  {/* <!-- Middle row --> */}
-  <div className="p-2 flex mb-4  justify-center">
-    <OrbitFace/>
-    </div> 
-  <div className="  h-[30vh] mt-8 ">
-
-     <AIProcessPanel state={"idle"} />
-</div>
-
-  {/* <!-- Bottom row --> */}
-  <div className="  flex items-center justify-center"><UserPrompt/></div>
-  <div className=" border ">Bottom Center</div>
-  {/* <div class=" border flex items-center justify-center">Bottom Right</div> */}
-</div>
-
-
-
-
-
-
-
-    </section>
-    
-    
-    
-    
-    
-    
-    
-    </>
+    </main>
   );
 }

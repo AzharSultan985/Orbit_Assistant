@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import SystemContext from "../Context/orbitContext";
+import { useContext } from "react";
 
 export default function OrbitFace() {
-  const [state, setState] = useState("idle"); // "idle" | "listening" | "thinking" | "responding"
+  const { OrbitMode, setOrbitMode } =useContext(SystemContext);
 
   return (
     <div className="flex flex-col items-center justify-center h-full">
@@ -10,12 +12,12 @@ export default function OrbitFace() {
         {/* Head Circle */}
         <motion.div
           className="absolute w-56 h-56 rounded-full border-2 border-green-400 shadow-[0_0_30px_#00ff99] backdrop-blur-sm"
-          animate={state === "thinking" ? { rotate: 360 } : { rotate: 0 }}
+          animate={OrbitMode === "thinking" ? { rotate: 360 } : { rotate: 0 }}
           transition={{ repeat: Infinity, duration: 10, ease: "linear" }}
         />
 
         {/* Idle Core Glow */}
-        {state === "idle" && (
+        {OrbitMode === "idle" && (
           <motion.div
             className="absolute w-16 h-16 rounded-full bg-gradient-to-r from-green-400 to-cyan-500 blur-xl opacity-70"
             animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
@@ -24,7 +26,7 @@ export default function OrbitFace() {
         )}
 
         {/* Listening Pulse */}
-        {state === "listening" && (
+        {OrbitMode === "listening" && (
           <motion.div
             className="absolute w-24 h-24 rounded-full border border-cyan-400/50"
             animate={{ scale: [1, 1.3, 1], opacity: [1, 0.4, 1] }}
@@ -33,7 +35,7 @@ export default function OrbitFace() {
         )}
 
         {/* Thinking Animation (3D energy rings) */}
-        {state === "thinking" && (
+        {OrbitMode === "thinking" && (
           <>
             {[...Array(3)].map((_, i) => (
               <motion.div
@@ -55,18 +57,18 @@ export default function OrbitFace() {
         <div className="flex gap-12">
           <motion.div
             className="w-4 h-4 rounded-full bg-cyan-400 shadow-[0_0_15px_#00ffff]"
-            animate={state === "listening" ? { scale: [1, 1.5, 1] } : {}}
+            animate={OrbitMode === "listening" ? { scale: [1, 1.5, 1] } : {}}
             transition={{ repeat: Infinity, duration: 1 }}
           />
           <motion.div
             className="w-4 h-4 rounded-full bg-cyan-400 shadow-[0_0_15px_#00ffff]"
-            animate={state === "listening" ? { scale: [1, 1.5, 1] } : {}}
+            animate={OrbitMode === "listening" ? { scale: [1, 1.5, 1] } : {}}
             transition={{ repeat: Infinity, duration: 1, delay: 0.2 }}
           />
         </div>
 
         {/* Response Wave */}
-        {state === "responding" && (
+        {OrbitMode === "speaking" && (
           <motion.div
             className="absolute bottom-0 flex gap-1"
             initial={{ opacity: 0 }}
@@ -98,12 +100,12 @@ export default function OrbitFace() {
       </div>
 
       {/* Control Buttons */}
-      <div className="mt-6 flex gap-3">
-        <button onClick={() => setState("idle")} className="px-3 py-1 border border-gray-600 text-xs hover:text-green-400">Idle</button>
-        <button onClick={() => setState("listening")} className="px-3 py-1 border border-green-500 text-xs hover:text-green-400">Listening</button>
-        <button onClick={() => setState("thinking")} className="px-3 py-1 border border-cyan-500 text-xs hover:text-cyan-400">Thinking</button>
-        <button onClick={() => setState("responding")} className="px-3 py-1 border border-blue-500 text-xs hover:text-blue-400">Responding</button>
-      </div>
+      {/* <div className="mt-6 flex gap-3">
+        <button onClick={() => setOrbitMode("idle")} className="px-3 py-1 border border-gray-600 text-xs hover:text-green-400">Idle</button>
+        <button onClick={() => setOrbitMode("listening")} className="px-3 py-1 border border-green-500 text-xs hover:text-green-400">Listening</button>
+        <button onClick={() => setOrbitMode("thinking")} className="px-3 py-1 border border-cyan-500 text-xs hover:text-cyan-400">Thinking</button>
+        <button onClick={() => setOrbitMode("responding")} className="px-3 py-1 border border-blue-500 text-xs hover:text-blue-400">Responding</button>
+      </div> */}
     </div>
   );
 }

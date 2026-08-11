@@ -2,9 +2,10 @@
   "devDependencies": {
     "concurrently": "^9.2.1"
   },"scripts": {
-  "start": "concurrently \"npm run server\" \"npm run client\"",
-  "server": "cd Backend && node app.js",
-  "client": "cd Frontend && npm run dev"
+  "start": "concurrently \"npm run server\" \"npm run client\" \"npm run python\"",
+    "server": "cd Backend && node app.js",
+    "client": "cd Frontend && npm run dev",
+     "python": "cd Pythonbackend && venv312\\Scripts\\python.exe main.py"
 }
 
 }
