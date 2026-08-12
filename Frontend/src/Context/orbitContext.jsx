@@ -136,6 +136,7 @@ const [orbitResponse, setOrbitResponse] = useState(null);
 
   const sendOrbitMessage = (message) => {
     if (!message?.trim()) return;
+console.log("message",message);
 
     socket.emit("user:message", {
       message: message.trim(),
@@ -176,6 +177,7 @@ const [orbitResponse, setOrbitResponse] = useState(null);
       console.error("Mic control error:", error);
     }
   };
+console.log("orbitResponse",orbitResponse);
 
   return (
     <SystemContext.Provider

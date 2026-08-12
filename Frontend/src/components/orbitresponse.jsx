@@ -9,7 +9,7 @@ export default function OrbitRes() {
   const containerRef = useRef(null);
 
   const { sendOrbitMessage ,orbitResponse} = useSystem();
-
+const [isThinking, setIsThinking] = useState(false);
   // ==============================
   // AUTO SCROLL
   // ==============================
@@ -20,11 +20,14 @@ export default function OrbitRes() {
         containerRef.current.scrollHeight;
     }
   }, [messages]);
+
+
+
 useEffect(() => {
 
-    if (!orbitResponse) {
-        return;
-    }
+    if (!orbitResponse) return;
+
+    setIsThinking(false);
 
     setMessages((prev) => [
         ...prev,
@@ -32,6 +35,7 @@ useEffect(() => {
     ]);
 
 }, [orbitResponse]);
+
   // ==============================
   // SEND
   // ==============================
@@ -41,23 +45,23 @@ useEffect(() => {
 
     if (!text) return;
 
-    // Show immediately in UI
     setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        type: "user",
-        text,
-      },
+        ...prev,
+        {
+            id: Date.now(),
+            type: "user",
+            text,
+        },
     ]);
 
-    // Send to Node through Socket.IO
+    // Start thinking animation
+    setIsThinking(true);
+
+    // Send to Node
     sendOrbitMessage(text);
 
-    // Clear input
     setUserPrompt("");
-  };
-
+};
   return (
     <section className="relative w-full h-full bg-[#0c1c1f] overflow-hidden flex flex-col">
 
@@ -135,7 +139,88 @@ useEffect(() => {
           </div>
         ))}
       </div>
+{isThinking && (
+    <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        className="flex justify-start"
+    >
+        <div
+            className="
+                px-4
+                py-3
+                rounded-2xl
+                rounded-bl-sm
+                bg-green-500/10
+                border border-green-400/30
+                text-green-400
+                font-mono
+                flex items-center gap-2
+            "
+        >
 
+            {/* Orbit symbol */}
+            <motion.span
+                animate={{
+                    rotate: 360,
+                    scale: [1, 1.15, 1],
+                }}
+                transition={{
+                    rotate: {
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "linear",
+                    },
+                    scale: {
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                    },
+                }}
+                className="
+                    text-cyan-300
+                    text-lg
+                    drop-shadow-[0_0_6px_#00ffd1]
+                "
+            >
+                ◉
+            </motion.span>
+
+            {/* Thinking dots */}
+            <div className="flex items-center gap-1">
+
+                {[0, 1, 2].map((i) => (
+                    <motion.span
+                        key={i}
+                        className="
+                            w-1.5
+                            h-1.5
+                            rounded-full
+                            bg-green-400
+                            shadow-[0_0_6px_#00ff99]
+                        "
+                        animate={{
+                            opacity: [0.25, 1, 0.25],
+                            y: [0, -3, 0],
+                        }}
+                        transition={{
+                            duration: 0.8,
+                            repeat: Infinity,
+                            delay: i * 0.15,
+                        }}
+                    />
+                ))}
+
+            </div>
+
+            <span className="text-xs text-green-400/70 ml-1">
+                Orbit is thinking
+            </span>
+
+        </div>
+    </motion.div>
+)}
       {/* ==============================
           INPUT
       ============================== */}

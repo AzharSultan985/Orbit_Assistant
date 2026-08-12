@@ -1,4 +1,6 @@
-import askOllama from "./commandProccessController.js";
+import askOllama, {
+    getAIError,
+} from "./commandProccessController.js";
 
 export const receiveOrbitMessage = async (socket, data) => {
 
@@ -16,14 +18,12 @@ export const receiveOrbitMessage = async (socket, data) => {
         console.log("Message:", message);
         console.log("================================");
 
-        // Send directly to Ollama
         const answer = await askOllama(message);
 
-        // Send Ollama response back to this React client
         socket.emit("orbit:response", {
             success: true,
             response: answer,
-            type:"orbit",
+            type: "orbit",
             timestamp: new Date().toISOString(),
         });
 
@@ -36,7 +36,7 @@ export const receiveOrbitMessage = async (socket, data) => {
 
         socket.emit("orbit:response:error", {
             success: false,
-            message: error.message,
+            message: getAIError(error),
         });
     }
 };
