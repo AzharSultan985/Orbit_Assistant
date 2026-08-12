@@ -4,6 +4,7 @@ import CommandReceiverRoute from "./Routes/cmdReceRoute.js";
 import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
+import { receiveOrbitMessage } from "./Controller/orbitMessageController.js";
 
 const app = express();
 
@@ -47,7 +48,14 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => {
         console.log("React disconnected:", socket.id);
     });
+
+
+  // React -> Node
+  socket.on("user:message", (data) => {
+    receiveOrbitMessage(socket, data);
+  });
 });
+
 
 // ==========================================
 // ROUTES

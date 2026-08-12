@@ -9,6 +9,7 @@ from controller.ollama import ask_ollama
 from controller.orbitMode import OrbitMode
 from controller.orbit_log import orbit_log
 
+
 # =====================================================
 # START FASTAPI SERVER
 # =====================================================
@@ -134,13 +135,24 @@ async def processCommand(cmd):
 
 async def main():
 
+    global orbit_active
+
+
+    # =================================================
+    # STARTUP LOGS
+    # =================================================
+
     orbit_log("================================")
     orbit_log("       ORBIT AI ASSISTANT")
     orbit_log("================================")
-  
-    orbit_log("Python API started on:")
-    orbit_log("http://127.0.0.1:5000")
-    
+
+    orbit_log(
+        "Python API started on:"
+    )
+
+    orbit_log(
+        "http://127.0.0.1:5000"
+    )
 
 
     # =================================================
@@ -148,9 +160,8 @@ async def main():
     # =================================================
 
     await speak(
-        "Hello Azhar. Orbit is ready."
+        "Hello. Orbit is ready."
     )
-
 
     await OrbitMode("idle")
 
@@ -170,7 +181,9 @@ async def main():
     # MICROPHONE CALIBRATION
     # =================================================
 
-    orbit_log("Calibrating microphone...")
+    orbit_log(
+        "Calibrating microphone..."
+    )
 
     with sr.Microphone() as source:
 
@@ -179,7 +192,16 @@ async def main():
             duration=1
         )
 
-    orbit_log("Microphone ready.")
+    orbit_log(
+        "Microphone ready."
+    )
+
+
+    # =================================================
+    # INITIAL MIC STATE
+    # =================================================
+
+    last_mic_state = server.mic_enabled
 
 
     # =================================================
@@ -191,24 +213,54 @@ async def main():
         try:
 
             # =========================================
-            # CHECK MIC STATE
+            # MIC OFF
             # =========================================
 
             if not server.mic_enabled:
 
-                orbit_log(
-                    " Microphone disabled."
-                )
+                # Only execute when state changes
+                # ON -> OFF
 
-                await OrbitMode("idle")
+                if last_mic_state is True:
 
+                    last_mic_state = False
+
+                    # Stop Orbit session
+                    orbit_active = False
+
+                    orbit_log(
+                        "Microphone disabled."
+                    )
+
+                    await OrbitMode(
+                        "idle"
+                    )
+
+                # Don't continuously call OrbitMode
                 await asyncio.sleep(0.1)
 
                 continue
 
 
             # =========================================
-            # MIC ENABLED
+            # MIC ON
+            # =========================================
+
+            if last_mic_state is False:
+
+                last_mic_state = True
+
+                orbit_log(
+                    "Microphone enabled."
+                )
+
+                await OrbitMode(
+                    "idle"
+                )
+
+
+            # =========================================
+            # LISTEN
             # =========================================
 
             with sr.Microphone() as source:
@@ -216,13 +268,13 @@ async def main():
                 if orbit_active:
 
                     orbit_log(
-                        " Listening for command..."
+                        "Listening for command..."
                     )
 
                 else:
 
                     orbit_log(
-                        " Listening for 'Orbit'..."
+                        "Listening for 'Orbit'..."
                     )
 
 
@@ -255,7 +307,9 @@ async def main():
             # PROCESS COMMAND
             # =========================================
 
-            await processCommand(word)
+            await processCommand(
+                word
+            )
 
 
         # =============================================
@@ -301,7 +355,9 @@ async def main():
                 f"Error: {e}"
             )
 
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(
+                0.5
+            )
 
 
 # =====================================================
@@ -312,9 +368,12 @@ if __name__ == "__main__":
 
     try:
 
-        asyncio.run(main())
+        asyncio.run(
+            main()
+        )
 
     except KeyboardInterrupt:
 
-        
-        orbit_log("Orbit stopped.")
+        orbit_log(
+            "Orbit stopped."
+        )

@@ -14,50 +14,7 @@ export const OllamaController = async (req, res) => {
             });
         }
 
-        console.log("Orbit command received:", command);
-
-        const prompt = `
-You are Orbit, a personal AI voice assistant.
-
-Answer only what the user asks. and give aswer according to exact question and compelete answer in 5 lines 
-
-
-User:
-${command}
-
-Answer:
-`;
-
-        console.log("Sending command to Ollama...");
-
-        const response = await axios.post(
-            OLLAMA_URL,
-            {
-                model: OLLAMA_MODEL,
-                prompt,
-                stream: false,
-                think: false,
-                options: {
-                    temperature: 0.1,
-                    num_predict: 100,
-                    top_p: 0.8,
-                },
-            },
-            {
-                timeout: 60000,
-            }
-        );
-
-        const answer = response.data?.response?.trim();
-
-        console.log("Ollama:", answer);
-
-        if (!answer) {
-            return res.status(500).json({
-                success: false,
-                message: "Ollama returned an empty response",
-            });
-        }
+        const answer = await askOllama(command);
 
         return res.status(200).json({
             success: true,
@@ -65,15 +22,7 @@ Answer:
         });
 
     } catch (error) {
-
-        console.error("Command Controller Error:");
-        console.error(error.message);
-
-        // Axios error from Ollama
-        if (error.response) {
-            console.error("Ollama status:", error.response.status);
-            console.error("Ollama data:", error.response.data);
-        }
+        console.error("Ollama Controller Error:", error.message);
 
         return res.status(500).json({
             success: false,
@@ -81,3 +30,56 @@ Answer:
         });
     }
 };
+
+
+// =====================================================
+// OLLAMA REQUEST
+// =====================================================
+
+const askOllama = async (command) => {
+
+    console.log("Sending command to Ollama:", command);
+
+    const prompt = `
+Instruction :'You are Orbit, a personal AI voice assistant of Azhar.
+Answer only what the user asks. and give aswer according to exact question 
+if ask for solving math , any logic just give answer with little title and if asking for write code about any anthing like html js or making something like login page landing page or feature
+just return code with litle tile and must follow if user give you use instruction in query  '
+
+User query:
+${command}
+
+Answer:
+`;
+
+    const response = await axios.post(
+        OLLAMA_URL,
+        {
+            model: OLLAMA_MODEL,
+            prompt,
+            stream: false,
+            think: false,
+            options: {
+                temperature: 0.1,
+                num_predict: 100,
+                top_p: 0.8,
+            },
+        },
+        {
+            timeout: 60000,
+        }
+    );
+
+    const answer = response.data?.response?.trim();
+
+    if (!answer) {
+        throw new Error("Ollama returned an empty response");
+    }
+
+    console.log("Ollama response:", answer);
+
+    return answer;
+};
+
+
+export default askOllama

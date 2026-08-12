@@ -16,13 +16,12 @@ export const SystemProvider = ({ children }) => {
   const [MicEnabled, setMicEnabled] = useState(true);
   const [error, setError] = useState(null);
   const [OrbitMode, setOrbitMode] = useState("idle");
-
-  // Python/Orbit logs
   const [logs, setLogs] = useState([]);
+const [orbitResponse, setOrbitResponse] = useState(null);
+  // ==============================
+  // SYSTEM INFO
+  // ==============================
 
-  // -----------------------------
-  // System information
-  // -----------------------------
   const fetchSystemInfo = async () => {
     try {
       setLoading(true);
@@ -45,9 +44,6 @@ export const SystemProvider = ({ children }) => {
     }
   };
 
-  // -----------------------------
-  // System info polling
-  // -----------------------------
   useEffect(() => {
     fetchSystemInfo();
 
@@ -58,9 +54,10 @@ export const SystemProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // -----------------------------
-  // Socket.IO
-  // -----------------------------
+  // ==============================
+  // SOCKET
+  // ==============================
+
   useEffect(() => {
     const handleConnect = () => {
       console.log("React connected:", socket.id);
@@ -75,7 +72,6 @@ export const SystemProvider = ({ children }) => {
       setOrbitMode(mode);
     };
 
-    // Python -> Node -> React
     const handleOrbitLog = (data) => {
       console.log("Orbit log:", data);
 
@@ -89,25 +85,69 @@ export const SystemProvider = ({ children }) => {
       ]);
     };
 
+
+
+    const handleOrbitResponse = (data) => {
+
+        console.log("Orbit response:", data);
+
+        if (!data?.success) {
+            return;
+        }
+
+        setOrbitResponse({
+            id: Date.now() + Math.random(),
+            type: "orbit",
+            text: data.response,
+            timestamp: data.timestamp,
+        });
+    };
+
+
+
+
+
+
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
 
     socket.on("orbitMode", handleOrbitMode);
-
-    // IMPORTANT: same event emitted by Node
     socket.on("orbit:log", handleOrbitLog);
-
+   socket.on(
+        "orbit:response",
+        handleOrbitResponse
+    );
     return () => {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
+
       socket.off("orbitMode", handleOrbitMode);
       socket.off("orbit:log", handleOrbitLog);
+      socket.off(
+            "orbit:response",
+            handleOrbitResponse
+        );
     };
   }, []);
 
-  // -----------------------------
-  // Microphone
-  // -----------------------------
+  // ==============================
+  // SEND MESSAGE TO NODE
+  // ==============================
+
+  const sendOrbitMessage = (message) => {
+    if (!message?.trim()) return;
+
+    socket.emit("user:message", {
+      message: message.trim(),
+      type:"user",
+      timestamp: new Date().toISOString(),
+    });
+  };
+
+  // ==============================
+  // MICROPHONE
+  // ==============================
+
   const toggleMic = async () => {
     const enabled = !MicEnabled;
 
@@ -152,6 +192,9 @@ export const SystemProvider = ({ children }) => {
         toggleMic,
 
         logs,
+
+        // Socket message function
+        sendOrbitMessage,orbitResponse
       }}
     >
       {children}

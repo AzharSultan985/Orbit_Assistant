@@ -1,6 +1,6 @@
-
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { useSystem } from "../Context/orbitContext";
 
 export default function OrbitRes() {
   const [userPrompt, setUserPrompt] = useState("");
@@ -8,19 +8,40 @@ export default function OrbitRes() {
 
   const containerRef = useRef(null);
 
-  // Scroll to latest message
+  const { sendOrbitMessage ,orbitResponse} = useSystem();
+
+  // ==============================
+  // AUTO SCROLL
+  // ==============================
+
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTop =
         containerRef.current.scrollHeight;
     }
   }, [messages]);
+useEffect(() => {
+
+    if (!orbitResponse) {
+        return;
+    }
+
+    setMessages((prev) => [
+        ...prev,
+        orbitResponse,
+    ]);
+
+}, [orbitResponse]);
+  // ==============================
+  // SEND
+  // ==============================
 
   const handleSend = () => {
     const text = userPrompt.trim();
 
     if (!text) return;
 
+    // Show immediately in UI
     setMessages((prev) => [
       ...prev,
       {
@@ -30,31 +51,50 @@ export default function OrbitRes() {
       },
     ]);
 
+    // Send to Node through Socket.IO
+    sendOrbitMessage(text);
+
+    // Clear input
     setUserPrompt("");
   };
 
   return (
     <section className="relative w-full h-full bg-[#0c1c1f] overflow-hidden flex flex-col">
 
-      {/* =====================================================
-          TOP — ORBIT
-      ===================================================== */}
+      {/* ==============================
+          TOP
+      ============================== */}
+
       <div className="shrink-0 px-4 pt-4">
         <h2
-          className="font-mono text-xl font-extrabold text-cyan-300
-          tracking-widest drop-shadow-[0_0_8px_#00ffd1,0_0_18px_#00ffe7]"
+          className="
+            font-mono
+            text-xl
+            font-extrabold
+            text-cyan-300
+            tracking-widest
+            drop-shadow-[0_0_8px_#00ffd1,0_0_18px_#00ffe7]
+          "
         >
           ORBIT
         </h2>
       </div>
 
-      {/* =====================================================
+      {/* ==============================
           MESSAGES
-          Empty when there are no messages
-      ===================================================== */}
+      ============================== */}
+
       <div
         ref={containerRef}
-        className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-3 scrollbar-custom"
+        className="
+          flex-1
+          min-h-0
+          overflow-y-auto
+          px-4
+          py-4
+          space-y-3
+          scrollbar-custom
+        "
       >
         {messages.map((message) => (
           <div
@@ -66,8 +106,14 @@ export default function OrbitRes() {
             }`}
           >
             <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{
+                opacity: 0,
+                y: 8,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
               className={`
                 max-w-[80%]
                 px-4
@@ -90,16 +136,19 @@ export default function OrbitRes() {
         ))}
       </div>
 
-      {/* =====================================================
-          BOTTOM — INPUT
-      ===================================================== */}
+      {/* ==============================
+          INPUT
+      ============================== */}
+
       <div className="shrink-0 p-3 border-t border-[#28bebe]/30">
         <div className="flex gap-2">
 
           <input
             type="text"
             value={userPrompt}
-            onChange={(e) => setUserPrompt(e.target.value)}
+            onChange={(e) =>
+              setUserPrompt(e.target.value)
+            }
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 handleSend();
@@ -113,7 +162,8 @@ export default function OrbitRes() {
               px-3
               rounded-xl
               bg-black/40
-              border border-[#28bebe]/50
+              border
+              border-[#28bebe]/50
               text-cyan-200
               placeholder:text-slate-600
               outline-none
@@ -131,7 +181,8 @@ export default function OrbitRes() {
               px-4
               shrink-0
               rounded-xl
-              border border-green-400/70
+              border
+              border-green-400/70
               text-green-400
               font-mono
               text-sm

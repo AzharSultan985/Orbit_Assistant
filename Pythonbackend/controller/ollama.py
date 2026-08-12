@@ -1,6 +1,6 @@
 import requests
 
-NODE_URL = "http://localhost:3002/api/v1/orbit/cmd"
+NODE_URL = "http://localhost:3002/api/v2/orbit/cmd"
 
 
 def ask_ollama(command):
