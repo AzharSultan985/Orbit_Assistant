@@ -23,7 +23,7 @@ Required format:
 Rules:
 
 - recipient = person's name only
-- message = exact message user wants to send
+- correct spelling if some words are worng or just make little enhance.
 - do not add explanations
 - do not use markdown
 - do not use code fences
