@@ -3,11 +3,15 @@ import threading
 import speech_recognition as sr
 
 import server
+import sys
 
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
 from commands.speak import speak
-from controller.ollama import ask_ollama
+from controller.qroq import ask_ollama
 from controller.orbitMode import OrbitMode
 from controller.orbit_log import orbit_log
+from controller.message import process_message_command
 
 
 # =====================================================
@@ -40,18 +44,106 @@ orbit_active = False
 # PROCESS COMMAND
 # =====================================================
 
+def is_message_command(cmd):
+    cmd = cmd.lower().strip()
+
+    keywords = [
+        "message",
+        "whatsapp",
+        "send message",
+        "send a message",
+        "message kro",
+        "text",
+        "ko message"
+    ]
+
+    return any(keyword in cmd for keyword in keywords)
+
+
 async def processCommand(cmd):
 
     global orbit_active
 
-    orbit_log(f"\nCommand: {cmd}")
-
+    original_cmd = cmd
     cmd = cmd.lower().strip()
 
+    orbit_log(f"\nCommand: {original_cmd}")
+
+    # =================================================
+    # MESSAGE COMMAND
+    # =================================================
+
+    if is_message_command(cmd):
+
+        await OrbitMode("thinking")
+
+        orbit_log("================================")
+        orbit_log("MESSAGE COMMAND DETECTED")
+        orbit_log(f"Command: {original_cmd}")
+        orbit_log("================================")
+
+        try:
+
+            result = await process_message_command(
+                original_cmd
+            )
+
+            if result:
+
+                recipient = result.get(
+                    "recipient",
+                    "the contact"
+                )
+
+                message = result.get(
+                    "message",
+                    ""
+                )
+
+                orbit_log(
+                    f"Recipient: {recipient}"
+                )
+
+                orbit_log(
+                    f"Message: {message}"
+                )
+
+                # IMPORTANT:
+                # process_message_command already handles
+                # WhatsApp opening/sending.
+
+                await speak(
+                    f"Message sent to {recipient}."
+                )
+
+            else:
+
+                await speak(
+                    "I could not send the message."
+                )
+
+        except Exception as e:
+
+            orbit_log(
+                f"Message command error: {e}"
+            )
+
+            await speak(
+                "I could not send the message."
+            )
+
+        # =================================================
+        # VERY IMPORTANT
+        # Don't send message command to normal Groq AI
+        # =================================================
+
+        if orbit_active:
+            await OrbitMode("listening")
+
+        return
 
     # =================================================
     # IDLE MODE
-    # Only "Orbit" activates Orbit
     # =================================================
 
     if not orbit_active:
@@ -60,14 +152,11 @@ async def processCommand(cmd):
 
             orbit_active = True
 
-            await OrbitMode("listening")
-
             await speak(
                 "Yes, I'm listening."
             )
 
         return
-
 
     # =================================================
     # STOP ORBIT
@@ -89,36 +178,36 @@ async def processCommand(cmd):
 
         return
 
-
     # =================================================
-    # THINKING
+    # NORMAL AI COMMAND
     # =================================================
 
     await OrbitMode("thinking")
 
     orbit_log(
-        f"Command for AI: {cmd}"
+        f"Command for AI: {original_cmd}"
     )
 
+    try:
 
-    # =================================================
-    # OLLAMA
-    # =================================================
+        response = await asyncio.to_thread(
+            ask_ollama,
+            original_cmd
+        )
 
-    response = await asyncio.to_thread(
-        ask_ollama,
-        cmd
-    )
+        if response:
 
+            await speak(response)
 
-    # =================================================
-    # SPEAK
-    # =================================================
+    except Exception as e:
 
-    if response:
+        orbit_log(
+            f"AI command error: {e}"
+        )
 
-        await speak(response)
-
+        await speak(
+            "Sorry, I could not process that request."
+        )
 
     # =================================================
     # LISTEN AGAIN
@@ -127,7 +216,6 @@ async def processCommand(cmd):
     if orbit_active:
 
         await OrbitMode("listening")
-
 
 # =====================================================
 # MAIN

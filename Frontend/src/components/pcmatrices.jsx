@@ -357,14 +357,14 @@ export default function PcMetrics() {
 
       {/* CPU */}
       <MetricBox
-        title="CPU Usage"
+        title="CPU "
         value={cpu}
         history={history.cpu}
       />
 
       {/* RAM */}
       <MetricBox
-        title="RAM Usage"
+        title="RAM "
         value={ram}
         history={history.ram}
       />
