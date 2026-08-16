@@ -1,4 +1,4 @@
-import askOllama, {
+import GroqLLM_Controller, {
     getAIError,
 } from "./commandProccessController.js";
 
@@ -12,14 +12,13 @@ export const receiveOrbitMessage = async (socket, data) => {
             return;
         }
 
-        console.log("================================");
-        console.log("ORBIT MESSAGE RECEIVED");
-        console.log("Socket:", socket.id);
+        console.log("ORBIT MESSAGE RECEIVED");       
         console.log("Message:", message);
-        console.log("================================");
+        
 
-        const answer = await askOllama(message);
+        const answer = await GroqLLM_Controller(message);
 
+       
         socket.emit("orbit:response", {
             success: true,
             response: answer,

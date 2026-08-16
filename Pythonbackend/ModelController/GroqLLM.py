@@ -1,0 +1,97 @@
+import  os
+from dotenv import load_dotenv
+from langchain_groq import ChatGroq
+# from langchain_core.prompts import PromptTemplate
+
+from langchain.agents import create_agent
+from ModelController.Tools.webSearch import web_search
+from ModelController.Tools.whatsapp_tools import Send_Message_Tool
+
+
+
+load_dotenv()
+
+# LLM
+
+llm =ChatGroq(
+    model="openai/gpt-oss-120b",
+    temperature=0,
+    api_key=os.getenv("GROQ_API_KEY")
+)
+
+
+
+# Tools/
+tools =[
+  web_search,
+  Send_Message_Tool
+]
+
+
+# Prompt
+
+SYSTEM_PROMPT = """
+You are Orbit, a personal AI assistant for Azhar.
+
+Understand the user's request and choose the appropriate tool.
+
+Use web_search for:
+- current information
+- latest news
+- today's events
+- current prices
+- current weather
+- recent technology information
+
+Use send_whatsapp when:
+- the user asks to send a WhatsApp message.
+
+Do not call a tool unless it is necessary.
+
+For Message:
+- extract the recipient
+- extract the exact message
+- call send_whatsapp
+- just little modify message if it make not sense otherwwise not change 
+
+For General question
+-never use any tool 
+-use direct llm 
+After the tool completes, give a short natural confirmation.
+
+important Note:
+ if user query come in hindi/urdu you must generate response in English/Roman urdu. can not directly urdu and hindi
+"""
+agent =create_agent(
+  model =llm,
+  tools =tools,
+   system_prompt= SYSTEM_PROMPT
+)
+
+
+def OrbitAgent(cmd):
+  try:
+    response =agent.invoke(
+      {
+        "messages":[
+{
+  "role":"user",
+  "content":cmd
+}
+          
+        ]      }
+    )
+
+    return response["messages"][-1].content
+  except Exception as e :
+     print(f"LLM error :{e}")
+
+
+
+
+# response = OrbitAgent(
+#         "Send Azhar a WhatsApp message saying I will reach home at 9 "
+#     )
+
+# print("\nOrbit:")
+# print(response)

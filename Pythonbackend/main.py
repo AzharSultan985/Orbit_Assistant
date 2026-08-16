@@ -1,26 +1,42 @@
 import asyncio
 import threading
-import speech_recognition as sr
+import sys
 
 import server
-import sys
+
+from controller.microphone import record_audio
+from controller.Speak_to_Text import Speech_to_text
+
+from controller.speak import speak
+from controller.orbitMode import OrbitMode
+from ModelController.GroqLLM import OrbitAgent
+# from controller.print import print
+
+
+
+# UTF-8
+
 
 sys.stdout.reconfigure(encoding="utf-8")
 sys.stderr.reconfigure(encoding="utf-8")
-from commands.speak import speak
-from controller.qroq import ask_ollama
-from controller.orbitMode import OrbitMode
-from controller.orbit_log import orbit_log
-from controller.message import process_message_command
 
 
-# =====================================================
-# START FASTAPI SERVER
-# =====================================================
+
+# ORBIT STATE
+
+
+orbit_active = False
+
+
+
+# START API SERVER
+
 
 def start_api_server():
 
-    orbit_log("Starting Orbit Python API...")
+    print(
+        "Starting Orbit Python API..."
+    )
 
     server.start_server()
 
@@ -33,414 +49,118 @@ api_thread = threading.Thread(
 api_thread.start()
 
 
-# =====================================================
-# ORBIT STATE
-# =====================================================
 
-orbit_active = False
+# WAKE WORD
 
 
-# =====================================================
-# PROCESS COMMAND
-# =====================================================
-
-def is_message_command(cmd):
-    cmd = cmd.lower().strip()
-
-    keywords = [
-        "message",
-        "whatsapp",
-        "send message",
-        "send a message",
-        "message kro",
-        "text",
-        "ko message"
-    ]
-
-    return any(keyword in cmd for keyword in keywords)
+WAKE_WORD = "orbit"
 
 
-async def processCommand(cmd):
 
-    global orbit_active
-
-    original_cmd = cmd
-    cmd = cmd.lower().strip()
-
-    orbit_log(f"\nCommand: {original_cmd}")
-
-    # =================================================
-    # MESSAGE COMMAND
-    # =================================================
-
-    if is_message_command(cmd):
-
-        await OrbitMode("thinking")
-
-        orbit_log("================================")
-        orbit_log("MESSAGE COMMAND DETECTED")
-        orbit_log(f"Command: {original_cmd}")
-        orbit_log("================================")
-
-        try:
-
-            result = await process_message_command(
-                original_cmd
-            )
-
-            if result:
-
-                recipient = result.get(
-                    "recipient",
-                    "the contact"
-                )
-
-                message = result.get(
-                    "message",
-                    ""
-                )
-
-                orbit_log(
-                    f"Recipient: {recipient}"
-                )
-
-                orbit_log(
-                    f"Message: {message}"
-                )
-
-                # IMPORTANT:
-                # process_message_command already handles
-                # WhatsApp opening/sending.
-
-                await speak(
-                    f"Message sent to {recipient}."
-                )
-
-            else:
-
-                await speak(
-                    "I could not send the message."
-                )
-
-        except Exception as e:
-
-            orbit_log(
-                f"Message command error: {e}"
-            )
-
-            await speak(
-                "I could not send the message."
-            )
-
-        # =================================================
-        # VERY IMPORTANT
-        # Don't send message command to normal Groq AI
-        # =================================================
-
-        if orbit_active:
-            await OrbitMode("listening")
-
-        return
-
-    # =================================================
-    # IDLE MODE
-    # =================================================
-
-    if not orbit_active:
-
-        if cmd == "orbit":
-
-            orbit_active = True
-
-            await speak(
-                "Yes, I'm listening."
-            )
-
-        return
-
-    # =================================================
-    # STOP ORBIT
-    # =================================================
-
-    if cmd in [
-        "stop orbit",
-        "orbit stop",
-        "stop"
-    ]:
-
-        orbit_active = False
-
-        await OrbitMode("idle")
-
-        await speak(
-            "Okay."
-        )
-
-        return
-
-    # =================================================
-    # NORMAL AI COMMAND
-    # =================================================
-
-    await OrbitMode("thinking")
-
-    orbit_log(
-        f"Command for AI: {original_cmd}"
-    )
-
-    try:
-
-        response = await asyncio.to_thread(
-            ask_ollama,
-            original_cmd
-        )
-
-        if response:
-
-            await speak(response)
-
-    except Exception as e:
-
-        orbit_log(
-            f"AI command error: {e}"
-        )
-
-        await speak(
-            "Sorry, I could not process that request."
-        )
-
-    # =================================================
-    # LISTEN AGAIN
-    # =================================================
-
-    if orbit_active:
-
-        await OrbitMode("listening")
-
-# =====================================================
 # MAIN
-# =====================================================
+
 
 async def main():
 
     global orbit_active
 
-
     # =================================================
-    # STARTUP LOGS
+    # STARTUP
     # =================================================
 
-    orbit_log("================================")
-    orbit_log("       ORBIT AI ASSISTANT")
-    orbit_log("================================")
+    print("================================")
+    print("       ORBIT AI ASSISTANT")
+    print("================================")
 
-    orbit_log(
+    print(
         "Python API started on:"
     )
 
-    orbit_log(
+    print(
         "http://127.0.0.1:5000"
     )
-
-
-    # =================================================
-    # STARTUP SPEECH
-    # =================================================
 
     await speak(
         "Hello. Orbit is ready."
     )
 
-    await OrbitMode("idle")
-
-
-    # =================================================
-    # SPEECH RECOGNIZER
-    # =================================================
-
-    recognizer = sr.Recognizer()
-
-    recognizer.pause_threshold = 2.0
-    recognizer.phrase_threshold = 0.3
-    recognizer.non_speaking_duration = 0.8
-
-
-    # =================================================
-    # MICROPHONE CALIBRATION
-    # =================================================
-
-    orbit_log(
-        "Calibrating microphone..."
+    await OrbitMode(
+        "idle"
     )
 
-    with sr.Microphone() as source:
-
-        recognizer.adjust_for_ambient_noise(
-            source,
-            duration=1
-        )
-
-    orbit_log(
-        "Microphone ready."
-    )
-
-
-    # =================================================
-    # INITIAL MIC STATE
-    # =================================================
-
-    last_mic_state = server.mic_enabled
-
-
-    # =================================================
-    # LISTEN LOOP
-    # =================================================
 
     while True:
 
         try:
-
-            # =========================================
-            # MIC OFF
-            # =========================================
-
             if not server.mic_enabled:
+                await OrbitMode("idle")
+                await asyncio.sleep(0.3)
+            audio_file = await record_audio()
 
-                # Only execute when state changes
-                # ON -> OFF
+            if not audio_file:
 
-                if last_mic_state is True:
-
-                    last_mic_state = False
-
-                    # Stop Orbit session
-                    orbit_active = False
-
-                    orbit_log(
-                        "Microphone disabled."
-                    )
-
-                    await OrbitMode(
-                        "idle"
-                    )
-
-                # Don't continuously call OrbitMode
-                await asyncio.sleep(0.1)
+                print(
+                    "No command detected." )
 
                 continue
 
+            await OrbitMode(
+                "thinking"
+            )
 
-            # =========================================
-            # MIC ON
-            # =========================================
+            print(
+                "Converting command to text..."
+            )
 
-            if last_mic_state is False:
+            text = await Speech_to_text(
+                audio_file
+            )
 
-                last_mic_state = True
+            if not text:
 
-                orbit_log(
-                    "Microphone enabled."
+                print(
+                    "Could not understand command."
                 )
 
                 await OrbitMode(
-                    "idle"
+                    "listening"
                 )
 
+                continue
 
-            # =========================================
-            # LISTEN
-            # =========================================
-
-            with sr.Microphone() as source:
-
-                if orbit_active:
-
-                    orbit_log(
-                        "Listening for command..."
-                    )
-
-                else:
-
-                    orbit_log(
-                        "Listening for 'Orbit'..."
-                    )
-
-
-                audio = recognizer.listen(
-                    source,
-                    timeout=5
-                )
-
-
-            # =========================================
-            # SPEECH → TEXT
-            # =========================================
-
-            orbit_log(
-                "Converting speech..."
+            print(
+                f"\nYou said: {text}\n"
             )
 
+            response = OrbitAgent(text)
 
-            word = recognizer.recognize_google(
-                audio
+            
+            await speak(response)
+
+
+
+
+
+            await OrbitMode(
+                "listening"
             )
 
+        
+        # CTRL + C
+        
 
-            orbit_log(
-                f"You said: {word}"
-            )
+        except KeyboardInterrupt:
 
+            raise
 
-            # =========================================
-            # PROCESS COMMAND
-            # =========================================
-
-            await processCommand(
-                word
-            )
-
-
-        # =============================================
-        # NO SPEECH
-        # =============================================
-
-        except sr.WaitTimeoutError:
-
-            orbit_log(
-                "No speech detected."
-            )
-
-
-        # =============================================
-        # UNKNOWN SPEECH
-        # =============================================
-
-        except sr.UnknownValueError:
-
-            orbit_log(
-                "Could not understand audio."
-            )
-
-
-        # =============================================
-        # GOOGLE API ERROR
-        # =============================================
-
-        except sr.RequestError as e:
-
-            orbit_log(
-                f"Speech recognition error: {e}"
-            )
-
-
-        # =============================================
-        # OTHER ERROR
-        # =============================================
+        
+        # GENERAL ERROR
+        
 
         except Exception as e:
 
-            orbit_log(
-                f"Error: {e}"
+            print(
+                f"Orbit error: {e}"
             )
 
             await asyncio.sleep(
@@ -448,9 +168,9 @@ async def main():
             )
 
 
-# =====================================================
+
 # START ORBIT
-# =====================================================
+
 
 if __name__ == "__main__":
 
@@ -462,6 +182,8 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:
 
-        orbit_log(
+        orbit_active = False
+
+        print(
             "Orbit stopped."
         )

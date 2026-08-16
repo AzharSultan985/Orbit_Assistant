@@ -14,7 +14,7 @@ const GROQ_MODEL = "openai/gpt-oss-120b";
 // BASE SYSTEM PROMPT
 // =====================================================
 
-const General_PROMPT = `
+const Prompt = `
 You are Orbit, a personal AI assistant for Azhar.
 
 Your job is to help Azhar with programming, software development,
@@ -33,134 +33,13 @@ IMPORTANT RULES:
 8. Never replace requested working code with pseudo-code unless asked.
 `;
 
-// =====================================================
-// SPEAK MODE PROMPT
-// =====================================================
-
-const SPEAK_PROMPT = `
-You are Orbit, a personal AI assistant for Azhar.
-You are responding through Orbit's voice assistant.
-
-The response will be converted to speech using Microsoft Edge TTS.
-
-Therefore:
-
-1. Write naturally for spoken conversation.
-2. Use short, clear paragraphs.
-3. Keep sentences reasonably short.
-4. Do not use Markdown.
-5. Do not use code blocks.
-6. Do not use bullet points unless absolutely necessary.
-7. Do not use tables.
-8. Do not use symbols that are difficult for speech synthesis.
-9. Avoid unnecessary technical formatting.
-10. Explain things conversationally and professionally.
-11. For simple questions, keep the answer concise.
-12. For technical questions, explain the important points clearly,
-    but divide the answer into natural spoken paragraphs.
-13. If the user asks for code while using voice mode,
-    explain the solution rather than reading a large code block aloud.
-14. Never say "here is the code" and then output a huge code block.
-15. Make the response comfortable to listen to.
-16. not use in response quotes etc beacuse edge tts speak same thing so avoid it .
-`;
-
-// =====================================================
-// CHAT MODE PROMPT
-// =====================================================
 
 
+const  GroqLLM_Controller = async (command) => {
 
-// =====================================================
-// HTTP CONTROLLER
-// =====================================================
-
-export const OllamaController = async (req, res) => {
-
-    try {
-
-        const { command, content = "speak" } = req.body;
-
-        if (!command?.trim()) {
-
-            return res.status(400).json({
-                success: false,
-                message: "Command is required",
-            });
-
-        }
-
-        console.log("================================");
-        console.log("AI REQUEST");
-        console.log("Command:", command);
-        console.log("Mode:", content);
-        console.log("================================");
-
-        const answer = await askOllama(
-            command,
-            content
-        );
-
-        return res.status(200).json({
-            success: true,
-            response: answer,
-            mode: content,
-        });
-
-    } catch (error) {
-
-        console.error("================================");
-        console.error("AI CONTROLLER ERROR");
-        console.error(error);
-        console.error("================================");
-
-        return res.status(500).json({
-            success: false,
-            message: getAIError(error),
-        });
-    }
-};
-
-// =====================================================
-// GROQ REQUEST
-// =====================================================
-
-const askOllama = async (
-    command,
-    mode = "General_PROMPT"
-) => {
-
-    console.log("================================");
     console.log("Sending command to Groq");
-    console.log("Command:", command);
-    console.log("Model:", GROQ_MODEL);
-    console.log("Mode:", mode);
-    console.log("================================");
 
     try {
-
-        // ---------------------------------------------
-        // SELECT RESPONSE STYLE
-        // ---------------------------------------------
-
-        const modePrompt =
-            mode === "speak"
-                ? SPEAK_PROMPT
-                : General_PROMPT;
-
-        // ---------------------------------------------
-        // CREATE SYSTEM PROMPT
-        // ---------------------------------------------
-
-//         const systemPrompt = `
-// ${SYSTEM_PROMPT}
-
-// ${modePrompt}
-// `;
-
-        // ---------------------------------------------
-        // GROQ REQUEST
-        // ---------------------------------------------
 
         const completion =
             await groq.chat.completions.create({
@@ -171,7 +50,7 @@ const askOllama = async (
 
                     {
                         role: "system",
-                        content: modePrompt,
+                        content: Prompt,
                     },
 
                     {
@@ -181,26 +60,14 @@ const askOllama = async (
 
                 ],
 
-                temperature:
-                    mode === "speak"
-                        ? 0.3
-                        : 0.2,
+                temperature:0.2,
 
-                max_completion_tokens:
-                    mode === "speak"
-                        ? 1200
-                        : 4096,
-
+                max_completion_tokens:4096,
                 top_p: 0.8,
-
                 reasoning_effort: "low",
-
                 stream: false,
             });
 
-        // ---------------------------------------------
-        // GET RESPONSE
-        // ---------------------------------------------
 
         const answer =
             completion
@@ -216,21 +83,16 @@ const askOllama = async (
             );
         }
 
-        console.log("================================");
         console.log("Groq response received");
-        console.log("Mode:", mode);
-        console.log("================================");
 
         return answer;
 
     } catch (error) {
 
-        console.error("================================");
         console.error("GROQ ERROR");
         console.error("Message:", error.message);
         console.error("Code:", error.code);
         console.error("Status:", error.status);
-        console.error("================================");
 
         throw error;
     }
@@ -276,4 +138,4 @@ export const getAIError = (error) => {
     );
 };
 
-export default askOllama;
+export default GroqLLM_Controller;
