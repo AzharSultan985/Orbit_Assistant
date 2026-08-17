@@ -1,75 +1,122 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useSystem } from "../Context/orbitContext";
+import {
+  Maximize2,
+  Minimize2,
+} from "lucide-react";
 
 export default function OrbitRes() {
+
   const [userPrompt, setUserPrompt] = useState("");
   const [messages, setMessages] = useState([]);
+  const [isThinking, setIsThinking] = useState(false);
+
+  const [isMaximized, setIsMaximized] = useState(false);
 
   const containerRef = useRef(null);
 
-  const { sendOrbitMessage ,orbitResponse} = useSystem();
-const [isThinking, setIsThinking] = useState(false);
-  // ==============================
+  const {
+    sendOrbitMessage,
+    orbitResponse
+  } = useSystem();
+
+
+  // =================================================
   // AUTO SCROLL
-  // ==============================
+  // =================================================
 
   useEffect(() => {
+
     if (containerRef.current) {
+
       containerRef.current.scrollTop =
         containerRef.current.scrollHeight;
+
     }
+
   }, [messages]);
 
 
+  // =================================================
+  // ORBIT RESPONSE
+  // =================================================
 
-useEffect(() => {
+  useEffect(() => {
 
     if (!orbitResponse) return;
 
     setIsThinking(false);
 
     setMessages((prev) => [
-        ...prev,
-        orbitResponse,
+      ...prev,
+      orbitResponse,
     ]);
 
-}, [orbitResponse]);
+  }, [orbitResponse]);
 
-  // ==============================
+
+  // =================================================
   // SEND
-  // ==============================
+  // =================================================
 
   const handleSend = () => {
+
     const text = userPrompt.trim();
 
     if (!text) return;
 
     setMessages((prev) => [
-        ...prev,
-        {
-            id: Date.now(),
-            type: "user",
-            text,
-        },
+      ...prev,
+      {
+        id: Date.now(),
+        type: "user",
+        text,
+      },
     ]);
 
-    // Start thinking animation
     setIsThinking(true);
 
-    // Send to Node
     sendOrbitMessage(text);
 
     setUserPrompt("");
-};
+  };
+
+
+  // =================================================
+  // TOGGLE MAXIMIZE
+  // =================================================
+
+  const toggleMaximize = () => {
+
+    setIsMaximized((prev) => !prev);
+
+  };
+
+
   return (
-    <section className="relative w-full h-full bg-[#0c1c1f] overflow-hidden flex flex-col">
 
-      {/* ==============================
+    <section
+      className={`
+        bg-[#0c1c1f]
+        overflow-hidden
+        flex
+        flex-col
+
+        ${
+          isMaximized
+            ? "fixed inset-0 z-[9999] w-screen h-screen"
+            : "relative w-full h-full"
+        }
+      `}
+    >
+
+      {/* =================================================
           TOP
-      ============================== */}
+      ================================================= */}
 
-      <div className="shrink-0 px-4 pt-4">
+      <div className="shrink-0 px-4 pt-4 flex justify-between">
+
         <h2
           className="
             font-mono
@@ -82,11 +129,40 @@ useEffect(() => {
         >
           ORBIT
         </h2>
+
+
+        {/* MAXIMIZE / MINIMIZE */}
+
+        <button
+          className="
+            p-2
+            cursor-pointer
+            rounded-lg
+            hover:bg-white/10
+            transition
+          "
+          onClick={toggleMaximize}
+          title={
+            isMaximized
+              ? "Minimize"
+              : "Maximize"
+          }
+        >
+
+          {isMaximized ? (
+            <Minimize2 size={20} />
+          ) : (
+            <Maximize2 size={20} />
+          )}
+
+        </button>
+
       </div>
 
-      {/* ==============================
+
+      {/* =================================================
           MESSAGES
-      ============================== */}
+      ================================================= */}
 
       <div
         ref={containerRef}
@@ -100,54 +176,84 @@ useEffect(() => {
           scrollbar-custom
         "
       >
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${
-              message.type === "user"
-                ? "justify-end"
-                : "justify-start"
-            }`}
-          >
-            <motion.div
-              initial={{
-                opacity: 0,
-                y: 8,
-              }}
-              animate={{
-                opacity: 1,
-                y: 0,
-              }}
-              className={`
-                max-w-[80%]
-                px-4
-                py-2.5
-                rounded-2xl
-                font-mono
-                text-sm
-                leading-relaxed
-                whitespace-pre-wrap
-                ${
-                  message.type === "user"
-                    ? "bg-cyan-500/10 border border-cyan-400/30 text-cyan-200 rounded-br-sm"
-                    : "bg-green-500/10 border border-green-400/30 text-green-300 rounded-bl-sm"
-                }
-              `}
-            >
-              {message.text}
-            </motion.div>
-          </div>
-        ))}
-      </div>
-{isThinking && (
+
+      {messages.map((message) => (
+
+  <div
+    key={message.id}
+    className={`flex ${
+      message.type === "user"
+        ? "justify-end"
+        : "justify-start"
+    }`}
+  >
+
     <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0 }}
-        className="flex justify-start"
+      initial={{
+        opacity: 0,
+        y: 8,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      className={`
+        max-w-[80%]
+        px-4
+        py-2.5
+        rounded-2xl
+        font-mono
+        text-sm
+        leading-relaxed
+        whitespace-pre-wrap
+
+        ${
+          message.type === "user"
+            ? `
+              bg-cyan-500/10
+              border border-cyan-400/30
+              text-slate-100
+              rounded-br-sm
+            `
+            : `
+              bg-slate-800/40
+              border border-slate-600/40
+              text-slate-200
+              rounded-bl-sm
+            `
+        }
+      `}
     >
-        <div
-            className="
+
+      {message.text}
+
+    </motion.div>
+
+  </div>
+
+))}
+
+
+        {/* =================================================
+            THINKING
+        ================================================= */}
+
+        {isThinking && (
+
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 8
+            }}
+            animate={{
+              opacity: 1,
+              y: 0
+            }}
+            className="flex justify-start sticky"
+          >
+
+            <div
+              className="
                 px-4
                 py-3
                 rounded-2xl
@@ -156,76 +262,87 @@ useEffect(() => {
                 border border-green-400/30
                 text-green-400
                 font-mono
-                flex items-center gap-2
-            "
-        >
+                flex
+                items-center
+                gap-2
+              "
+            >
 
-            {/* Orbit symbol */}
-            <motion.span
+              <motion.span
                 animate={{
-                    rotate: 360,
-                    scale: [1, 1.15, 1],
+                  rotate: 360,
+                  scale: [1, 1.15, 1],
                 }}
                 transition={{
-                    rotate: {
-                        duration: 2,
-                        repeat: Infinity,
-                        ease: "linear",
-                    },
-                    scale: {
-                        duration: 1,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                    },
+                  rotate: {
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "linear",
+                  },
+                  scale: {
+                    duration: 1,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  },
                 }}
                 className="
-                    text-cyan-300
-                    text-lg
-                    drop-shadow-[0_0_6px_#00ffd1]
+                  text-cyan-300
+                  text-lg
+                  drop-shadow-[0_0_6px_#00ffd1]
                 "
-            >
+              >
                 ◉
-            </motion.span>
+              </motion.span>
 
-            {/* Thinking dots */}
-            <div className="flex items-center gap-1">
+
+              <div className="flex items-center gap-1">
 
                 {[0, 1, 2].map((i) => (
-                    <motion.span
-                        key={i}
-                        className="
-                            w-1.5
-                            h-1.5
-                            rounded-full
-                            bg-green-400
-                            shadow-[0_0_6px_#00ff99]
-                        "
-                        animate={{
-                            opacity: [0.25, 1, 0.25],
-                            y: [0, -3, 0],
-                        }}
-                        transition={{
-                            duration: 0.8,
-                            repeat: Infinity,
-                            delay: i * 0.15,
-                        }}
-                    />
+
+                  <motion.span
+                    key={i}
+                    className="
+                      w-1.5
+                      h-1.5
+                      rounded-full
+                      bg-green-400
+                      shadow-[0_0_6px_#00ff99]
+                    "
+                    animate={{
+                      opacity: [0.25, 1, 0.25],
+                      y: [0, -3, 0],
+                    }}
+                    transition={{
+                      duration: 0.8,
+                      repeat: Infinity,
+                      delay: i * 0.15,
+                    }}
+                  />
+
                 ))}
+
+              </div>
+
+
+              <span className="text-xs text-green-400/70 ml-1">
+                Orbit is thinking
+              </span>
 
             </div>
 
-            <span className="text-xs text-green-400/70 ml-1">
-                Orbit is thinking
-            </span>
+          </motion.div>
 
-        </div>
-    </motion.div>
-)}
-      {/* ==============================
+        )}
+
+      </div>
+
+
+      {/* =================================================
           INPUT
-      ============================== */}
+      ================================================= */}
 
-      <div className="shrink-0 p-3 border-t border-[#28bebe]/30">
+      <div className="shrink-0 p-3 border-t border-[#28bebe]/30 sticky">
+
         <div className="flex gap-2">
 
           <input
@@ -235,9 +352,11 @@ useEffect(() => {
               setUserPrompt(e.target.value)
             }
             onKeyDown={(e) => {
+
               if (e.key === "Enter") {
                 handleSend();
               }
+
             }}
             placeholder="Ask Orbit..."
             className="
@@ -258,6 +377,7 @@ useEffect(() => {
               focus:shadow-[0_0_10px_rgba(0,255,209,0.2)]
             "
           />
+
 
           <button
             onClick={handleSend}
@@ -280,6 +400,7 @@ useEffect(() => {
           </button>
 
         </div>
+
       </div>
 
     </section>

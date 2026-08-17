@@ -2,12 +2,14 @@ from faster_whisper import WhisperModel
 # from controller.orbit_log import orbit_log
 
 import os
-Model_Size ="small"
+Model_Size ="base"
 
 model = WhisperModel(
     Model_Size,
     device="cpu",
-    compute_type="default"
+   compute_type="int8",
+    cpu_threads=4,
+    num_workers=1
 )
 
 async def Speech_to_text(audio_file):
