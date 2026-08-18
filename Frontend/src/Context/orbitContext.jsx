@@ -18,6 +18,12 @@ export const SystemProvider = ({ children }) => {
   const [OrbitMode, setOrbitMode] = useState("idle");
   const [logs, setLogs] = useState([]);
 const [orbitResponse, setOrbitResponse] = useState(null);
+const [orbitHistory, setOrbitHistory] = useState(null);
+
+  const [messages, setMessages] = useState([]);
+
+
+
   // ==============================
   // SYSTEM INFO
   // ==============================
@@ -27,7 +33,7 @@ const [orbitResponse, setOrbitResponse] = useState(null);
       setLoading(true);
 
       const res = await fetch(
-        `${BACKEND_URL}/api/v1/system-info`
+        `${BACKEND_URL}/api/v1/orbit/system-info`
       );
 
       const data = await res.json();
@@ -49,7 +55,7 @@ const [orbitResponse, setOrbitResponse] = useState(null);
 
     const interval = setInterval(() => {
       fetchSystemInfo();
-    }, 5000);
+    }, 6000);
 
     return () => clearInterval(interval);
   }, []);
@@ -95,17 +101,11 @@ const [orbitResponse, setOrbitResponse] = useState(null);
             return;
         }
 
-        setOrbitResponse({
+        setMessages({
             id: Date.now() + Math.random(),
-            type: "orbit",
-            text: data.response,
-            timestamp: data.timestamp,
+            orbit: data.response,
         });
     };
-
-
-
-
 
 
     socket.on("connect", handleConnect);
@@ -177,7 +177,40 @@ console.log("message",message);
       console.error("Mic control error:", error);
     }
   };
-console.log("orbitResponse",orbitResponse);
+
+
+
+
+
+
+  const FetchConversation = async () => {
+    try {
+      setLoading(true);
+
+      const res = await fetch(
+        `${BACKEND_URL}/api/v1/orbit/conversation`
+      );
+
+      const data = await res.json();
+
+      if (!data.success) {
+        throw new Error("Failed to fetch conversation");
+      }
+
+  setOrbitHistory(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+ 
+
+
+
+
+
 
   return (
     <SystemContext.Provider
@@ -196,7 +229,7 @@ console.log("orbitResponse",orbitResponse);
         logs,
 
         // Socket message function
-        sendOrbitMessage,orbitResponse
+        sendOrbitMessage,orbitResponse,FetchConversation
       }}
     >
       {children}

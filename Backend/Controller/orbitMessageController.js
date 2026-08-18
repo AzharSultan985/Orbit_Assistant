@@ -1,8 +1,9 @@
+import Conversation from "../Model/conversation.js";
 import GroqLLM_Controller, {
     getAIError,
 } from "./commandProccessController.js";
 
-export const receiveOrbitMessage = async (socket, data) => {
+export const receiveOrbitMessage =  (socket, data) => {
 
     try {
 
@@ -25,6 +26,12 @@ export const receiveOrbitMessage = async (socket, data) => {
             type: "orbit",
             timestamp: new Date().toISOString(),
         });
+
+      await Conversation.create({
+        user:message,
+        orbit:answer
+      })
+    
 
     } catch (error) {
 

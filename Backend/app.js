@@ -8,6 +8,7 @@ import { Server } from "socket.io";
 import SystemRoutes from "./Routes/SystemRoute.js";
 import CommandReceiverRoute from "./Routes/cmdReceRoute.js";
 import { receiveOrbitMessage } from "./Controller/orbitMessageController.js";
+import ConnectDB from "./Model/dbConnection.js";
 
 const app = express();
 
@@ -18,6 +19,11 @@ app.use(
         origin: true,
     })
 );
+
+
+
+
+ConnectDB()
 
 const server = http.createServer(app);
 
@@ -54,7 +60,7 @@ app.get("/", (req, res) => {
     res.send("Backend running");
 });
 
-app.use("/api/v1", SystemRoutes);
+app.use("/api/v1/orbit", SystemRoutes);
 
 app.use(
     "/api/v2/orbit",

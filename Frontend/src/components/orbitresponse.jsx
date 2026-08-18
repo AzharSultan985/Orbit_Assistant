@@ -9,7 +9,6 @@ import {
 export default function OrbitRes() {
 
   const [userPrompt, setUserPrompt] = useState("");
-  const [messages, setMessages] = useState([]);
   const [isThinking, setIsThinking] = useState(false);
 
   const [isMaximized, setIsMaximized] = useState(false);
@@ -18,7 +17,7 @@ export default function OrbitRes() {
 
   const {
     sendOrbitMessage,
-    orbitResponse
+    orbitResponse,FetchConversation,messages,setMessages
   } = useSystem();
 
 
@@ -42,19 +41,21 @@ export default function OrbitRes() {
   // ORBIT RESPONSE
   // =================================================
 
-  useEffect(() => {
 
-    if (!orbitResponse) return;
 
-    setIsThinking(false);
 
-    setMessages((prev) => [
-      ...prev,
-      orbitResponse,
-    ]);
+// useEffect(() => {
 
-  }, [orbitResponse]);
+//   if (!orbitResponse) return;
 
+//   setIsThinking(false);
+
+//   setMessages((prev) => [
+//     ...prev,
+//     orbitResponse,
+//   ]);
+
+// }, []);
 
   // =================================================
   // SEND
@@ -69,15 +70,15 @@ export default function OrbitRes() {
     setMessages((prev) => [
       ...prev,
       {
-        id: Date.now(),
-        type: "user",
-        text,
+        _id: Date.now(),
+        user:text,
+        orbit:null
       },
     ]);
 
     setIsThinking(true);
 
-    sendOrbitMessage(text);
+    // sendOrbitMessage(text);
 
     setUserPrompt("");
   };
@@ -178,14 +179,10 @@ export default function OrbitRes() {
       >
 
       {messages.map((message) => (
-
+<>
   <div
-    key={message.id}
-    className={`flex ${
-      message.type === "user"
-        ? "justify-end"
-        : "justify-start"
-    }`}
+    key={message._id}
+    className={`flex justify-end`}
   >
 
     <motion.div
@@ -206,33 +203,92 @@ export default function OrbitRes() {
         text-sm
         leading-relaxed
         whitespace-pre-wrap
+        bg-cyan-500/10
+        border border-cyan-400/30
+        text-slate-100
+        rounded-br-sm
 
-        ${
-          message.type === "user"
-            ? `
-              bg-cyan-500/10
-              border border-cyan-400/30
-              text-slate-100
-              rounded-br-sm
-            `
-            : `
-              bg-slate-800/40
-              border border-slate-600/40
-              text-slate-200
-              rounded-bl-sm
-            `
-        }
+
       `}
     >
 
-      {message.text}
+      {message.user}
 
     </motion.div>
 
+
+
+
+   
+
   </div>
 
-))}
 
+
+
+{/* // orbit response */}
+
+
+
+
+  <div
+    key={message._id}
+    className={`flex justify-start`}
+  >
+
+    <motion.div
+      initial={{
+        opacity: 0,
+        y: 8,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      className={`
+        max-w-[80%]
+        px-4
+        py-2.5
+        rounded-2xl
+        font-mono
+        text-sm
+        leading-relaxed
+        whitespace-pre-wrap
+        bg-cyan-500/10
+        border border-cyan-400/30
+        text-slate-100
+        rounded-br-sm
+
+
+      `}
+    >
+
+      {/* {message.orbit} */}
+hi iam orbit 
+    </motion.div>
+
+
+
+
+   
+
+  </div>
+
+
+
+
+
+
+</>
+
+
+
+
+
+
+
+
+))}
 
         {/* =================================================
             THINKING
