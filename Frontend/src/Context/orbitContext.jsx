@@ -125,7 +125,7 @@ const [orbitHistory, setOrbitHistory] = useState(null);
       socket.off("orbit:log", handleOrbitLog);
       socket.off(
             "orbit:response",
-            handleOrbitResponse
+            FetchConversation
         );
     };
   }, []);
@@ -197,7 +197,7 @@ console.log("message",message);
         throw new Error("Failed to fetch conversation");
       }
 
-  setOrbitHistory(data);
+  setOrbitHistory(data.history);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -205,6 +205,12 @@ console.log("message",message);
     }
   };
 
+
+
+//   useEffect(()=>{
+// FetchConversation()
+//   },[])
+//  console.log(orbitHistory);
  
 
 
@@ -229,7 +235,7 @@ console.log("message",message);
         logs,
 
         // Socket message function
-        sendOrbitMessage,orbitResponse,FetchConversation
+        sendOrbitMessage,orbitResponse,FetchConversation,messages,setMessages,orbitHistory
       }}
     >
       {children}

@@ -3,7 +3,7 @@ import GroqLLM_Controller, {
     getAIError,
 } from "./commandProccessController.js";
 
-export const receiveOrbitMessage =  (socket, data) => {
+export const receiveOrbitMessage = async (socket, data) => {
 
     try {
 

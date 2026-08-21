@@ -17,7 +17,7 @@ export default function OrbitRes() {
 
   const {
     sendOrbitMessage,
-    orbitResponse,FetchConversation,messages,setMessages
+    orbitResponse,FetchConversation,messages,setMessages,orbitHistory
   } = useSystem();
 
 
@@ -78,7 +78,7 @@ export default function OrbitRes() {
 
     setIsThinking(true);
 
-    // sendOrbitMessage(text);
+    sendOrbitMessage(text);
 
     setUserPrompt("");
   };
@@ -178,14 +178,11 @@ export default function OrbitRes() {
         "
       >
 
-      {messages.map((message) => (
+      {orbitHistory?.map((message) => (
 <>
   <div
-    key={message._id}
-    className={`flex justify-end`}
-  >
-
-    <motion.div
+    key={message._id} className={`flex justify-end`}>
+   <motion.div
       initial={{
         opacity: 0,
         y: 8,
@@ -263,8 +260,8 @@ export default function OrbitRes() {
       `}
     >
 
-      {/* {message.orbit} */}
-hi iam orbit 
+      {message.orbit}
+{/* hi iam orbit  */}
     </motion.div>
 
 
