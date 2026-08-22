@@ -101,10 +101,14 @@ const [orbitHistory, setOrbitHistory] = useState(null);
             return;
         }
 
-        setMessages({
-            id: Date.now() + Math.random(),
-            orbit: data.response,
-        });
+        setMessages((prev)=>[
+          ...prev,{
+            _id: Date.now() + Math.random(),
+          type:"orbit",
+
+            text: data.response,
+        }
+        ]);
     };
 
 

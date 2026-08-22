@@ -1,68 +1,50 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useSystem } from "../Context/orbitContext";
-import {
-  Maximize2,
-  Minimize2,
-} from "lucide-react";
+import { Maximize2 } from "lucide-react";
 
 export default function OrbitRes() {
-
   const [userPrompt, setUserPrompt] = useState("");
   const [isThinking, setIsThinking] = useState(false);
-
-  const [isMaximized, setIsMaximized] = useState(false);
 
   const containerRef = useRef(null);
 
   const {
     sendOrbitMessage,
-    orbitResponse,FetchConversation,messages,setMessages,orbitHistory
+    orbitResponse,messages, setMessages
   } = useSystem();
 
-
-  // =================================================
+  // ==============================
   // AUTO SCROLL
-  // =================================================
+  // ==============================
 
   useEffect(() => {
-
     if (containerRef.current) {
-
       containerRef.current.scrollTop =
         containerRef.current.scrollHeight;
-
     }
-
   }, [messages]);
 
-
-  // =================================================
+  // ==============================
   // ORBIT RESPONSE
-  // =================================================
+  // ==============================
 
+  useEffect(() => {
+    if (!orbitResponse) return;
 
+    setIsThinking(false);
 
+    setMessages((prev) => [
+      ...prev,
+      orbitResponse,
+    ]);
+  }, [orbitResponse]);
 
-// useEffect(() => {
-
-//   if (!orbitResponse) return;
-
-//   setIsThinking(false);
-
-//   setMessages((prev) => [
-//     ...prev,
-//     orbitResponse,
-//   ]);
-
-// }, []);
-
-  // =================================================
+  // ==============================
   // SEND
-  // =================================================
+  // ==============================
 
   const handleSend = () => {
-
     const text = userPrompt.trim();
 
     if (!text) return;
@@ -70,51 +52,37 @@ export default function OrbitRes() {
     setMessages((prev) => [
       ...prev,
       {
-        _id: Date.now(),
-        user:text,
-        orbit:null
+        id: Date.now(),
+        type: "user",
+        text,
       },
     ]);
 
+    // Start thinking animation
     setIsThinking(true);
 
+    // Send to Node
     sendOrbitMessage(text);
 
     setUserPrompt("");
   };
 
-
-  // =================================================
-  // TOGGLE MAXIMIZE
-  // =================================================
-
-  const toggleMaximize = () => {
-
-    setIsMaximized((prev) => !prev);
-
-  };
-
-
   return (
-
     <section
-      className={`
+      className="
+        relative
+        w-full
+        h-full
         bg-[#0c1c1f]
         overflow-hidden
         flex
         flex-col
-
-        ${
-          isMaximized
-            ? "fixed inset-0 z-[9999] w-screen h-screen"
-            : "relative w-full h-full"
-        }
-      `}
+      "
     >
 
-      {/* =================================================
+      {/* ==============================
           TOP
-      ================================================= */}
+      ============================== */}
 
       <div className="shrink-0 px-4 pt-4 flex justify-between">
 
@@ -131,9 +99,6 @@ export default function OrbitRes() {
           ORBIT
         </h2>
 
-
-        {/* MAXIMIZE / MINIMIZE */}
-
         <button
           className="
             p-2
@@ -142,28 +107,16 @@ export default function OrbitRes() {
             hover:bg-white/10
             transition
           "
-          onClick={toggleMaximize}
-          title={
-            isMaximized
-              ? "Minimize"
-              : "Maximize"
-          }
         >
-
-          {isMaximized ? (
-            <Minimize2 size={20} />
-          ) : (
-            <Maximize2 size={20} />
-          )}
-
+          <Maximize2 size={20} />
         </button>
 
       </div>
 
 
-      {/* =================================================
+      {/* ==============================
           MESSAGES
-      ================================================= */}
+      ============================== */}
 
       <div
         ref={containerRef}
@@ -178,131 +131,79 @@ export default function OrbitRes() {
         "
       >
 
-      {orbitHistory?.map((message) => (
-<>
-  <div
-    key={message._id} className={`flex justify-end`}>
-   <motion.div
-      initial={{
-        opacity: 0,
-        y: 8,
-      }}
-      animate={{
-        opacity: 1,
-        y: 0,
-      }}
-      className={`
-        max-w-[80%]
-        px-4
-        py-2.5
-        rounded-2xl
-        font-mono
-        text-sm
-        leading-relaxed
-        whitespace-pre-wrap
-        bg-cyan-500/10
-        border border-cyan-400/30
-        text-slate-100
-        rounded-br-sm
+        {messages?.map((message) => (
+
+          <div
+            key={message.id}
+            className={`flex ${
+              message.type === "user"
+                ? "justify-end"
+                : "justify-start"
+            }`}
+          >
+
+            <motion.div
+              initial={{
+                opacity: 0,
+                y: 8,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              className={`
+                max-w-[80%]
+                px-4
+                py-2.5
+                rounded-2xl
+                font-mono
+                text-sm
+                leading-relaxed
+                whitespace-pre-wrap
+
+                ${
+                  message.type === "user"
+                    ? `
+                      bg-cyan-500/10
+                      border
+                      border-cyan-400/30
+                      text-cyan-200
+                      rounded-br-sm
+                    `
+                    : `
+                      bg-green-500/10
+                      border
+                      border-green-400/30
+                      text-green-300
+                      rounded-bl-sm
+                    `
+                }
+              `}
+            >
+              {message.text}
+            </motion.div>
+
+          </div>
+
+        ))}
 
 
-      `}
-    >
-
-      {message.user}
-
-    </motion.div>
-
-
-
-
-   
-
-  </div>
-
-
-
-
-{/* // orbit response */}
-
-
-
-
-  <div
-    key={message._id}
-    className={`flex justify-start`}
-  >
-
-    <motion.div
-      initial={{
-        opacity: 0,
-        y: 8,
-      }}
-      animate={{
-        opacity: 1,
-        y: 0,
-      }}
-      className={`
-        max-w-[80%]
-        px-4
-        py-2.5
-        rounded-2xl
-        font-mono
-        text-sm
-        leading-relaxed
-        whitespace-pre-wrap
-        bg-cyan-500/10
-        border border-cyan-400/30
-        text-slate-100
-        rounded-br-sm
-
-
-      `}
-    >
-
-      {message.orbit}
-{/* hi iam orbit  */}
-    </motion.div>
-
-
-
-
-   
-
-  </div>
-
-
-
-
-
-
-</>
-
-
-
-
-
-
-
-
-))}
-
-        {/* =================================================
+        {/* ==============================
             THINKING
-        ================================================= */}
+        ============================== */}
 
         {isThinking && (
 
           <motion.div
             initial={{
               opacity: 0,
-              y: 8
+              y: 8,
             }}
             animate={{
               opacity: 1,
-              y: 0
+              y: 0,
             }}
-            className="flex justify-start sticky"
+            className="flex justify-start"
           >
 
             <div
@@ -312,7 +213,8 @@ export default function OrbitRes() {
                 rounded-2xl
                 rounded-bl-sm
                 bg-green-500/10
-                border border-green-400/30
+                border
+                border-green-400/30
                 text-green-400
                 font-mono
                 flex
@@ -320,6 +222,8 @@ export default function OrbitRes() {
                 gap-2
               "
             >
+
+              {/* Orbit symbol */}
 
               <motion.span
                 animate={{
@@ -347,6 +251,8 @@ export default function OrbitRes() {
                 ◉
               </motion.span>
 
+
+              {/* Thinking dots */}
 
               <div className="flex items-center gap-1">
 
@@ -377,7 +283,13 @@ export default function OrbitRes() {
               </div>
 
 
-              <span className="text-xs text-green-400/70 ml-1">
+              <span
+                className="
+                  text-xs
+                  text-green-400/70
+                  ml-1
+                "
+              >
                 Orbit is thinking
               </span>
 
@@ -390,11 +302,18 @@ export default function OrbitRes() {
       </div>
 
 
-      {/* =================================================
+      {/* ==============================
           INPUT
-      ================================================= */}
+      ============================== */}
 
-      <div className="shrink-0 p-3 border-t border-[#28bebe]/30 sticky">
+      <div
+        className="
+          shrink-0
+          p-3
+          border-t
+          border-[#28bebe]/30
+        "
+      >
 
         <div className="flex gap-2">
 
@@ -405,11 +324,9 @@ export default function OrbitRes() {
               setUserPrompt(e.target.value)
             }
             onKeyDown={(e) => {
-
               if (e.key === "Enter") {
                 handleSend();
               }
-
             }}
             placeholder="Ask Orbit..."
             className="
@@ -430,7 +347,6 @@ export default function OrbitRes() {
               focus:shadow-[0_0_10px_rgba(0,255,209,0.2)]
             "
           />
-
 
           <button
             onClick={handleSend}
