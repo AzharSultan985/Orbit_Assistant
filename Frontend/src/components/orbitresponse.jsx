@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useSystem } from "../Context/orbitContext";
-import { Maximize2 } from "lucide-react";
+import { Maximize2 ,Minimize2} from "lucide-react";
 
-export default function OrbitRes() {
+export default function OrbitRes(  maximized = false,
+  onMaximize,
+  onMinimize,) {
   const [userPrompt, setUserPrompt] = useState("");
   const [isThinking, setIsThinking] = useState(false);
 
@@ -11,7 +13,7 @@ export default function OrbitRes() {
 
   const {
     sendOrbitMessage,
-    orbitResponse,messages, setMessages
+    orbitResponse,messages, setMessages,FetchConversation
   } = useSystem();
 
   // ==============================
@@ -39,6 +41,18 @@ export default function OrbitRes() {
       orbitResponse,
     ]);
   }, [orbitResponse]);
+
+
+
+
+
+    useEffect(()=>{
+  FetchConversation()
+    },[])
+   console.log(messages);
+
+
+
 
   // ==============================
   // SEND

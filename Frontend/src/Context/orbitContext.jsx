@@ -17,8 +17,8 @@ export const SystemProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [OrbitMode, setOrbitMode] = useState("idle");
   const [logs, setLogs] = useState([]);
-const [orbitResponse, setOrbitResponse] = useState(null);
-const [orbitHistory, setOrbitHistory] = useState(null);
+  const [orbitResponse, setOrbitResponse] = useState(null);
+  const [orbitHistory, setOrbitHistory] = useState(null);
 
   const [messages, setMessages] = useState([]);
 
@@ -95,20 +95,20 @@ const [orbitHistory, setOrbitHistory] = useState(null);
 
     const handleOrbitResponse = (data) => {
 
-        console.log("Orbit response:", data);
+      console.log("Orbit response:", data);
 
-        if (!data?.success) {
-            return;
+      if (!data?.success) {
+        return;
+      }
+
+      setOrbitResponse(
+        {
+          _id: Date.now() + Math.random(),
+          type: "orbit",
+
+          text: data.response,
         }
-
-        setMessages((prev)=>[
-          ...prev,{
-            _id: Date.now() + Math.random(),
-          type:"orbit",
-
-            text: data.response,
-        }
-        ]);
+      );
     };
 
 
@@ -117,9 +117,9 @@ const [orbitHistory, setOrbitHistory] = useState(null);
 
     socket.on("orbitMode", handleOrbitMode);
     socket.on("orbit:log", handleOrbitLog);
-   socket.on(
-        "orbit:response",
-        handleOrbitResponse
+    socket.on(
+      "orbit:response",
+      handleOrbitResponse
     );
     return () => {
       socket.off("connect", handleConnect);
@@ -128,9 +128,9 @@ const [orbitHistory, setOrbitHistory] = useState(null);
       socket.off("orbitMode", handleOrbitMode);
       socket.off("orbit:log", handleOrbitLog);
       socket.off(
-            "orbit:response",
-            FetchConversation
-        );
+        "orbit:response",
+        FetchConversation
+      );
     };
   }, []);
 
@@ -140,11 +140,11 @@ const [orbitHistory, setOrbitHistory] = useState(null);
 
   const sendOrbitMessage = (message) => {
     if (!message?.trim()) return;
-console.log("message",message);
+    console.log("message", message);
 
     socket.emit("user:message", {
       message: message.trim(),
-      type:"user",
+      type: "user",
       timestamp: new Date().toISOString(),
     });
   };
@@ -201,7 +201,7 @@ console.log("message",message);
         throw new Error("Failed to fetch conversation");
       }
 
-  setOrbitHistory(data.history);
+      setMessages(data.history);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -211,11 +211,6 @@ console.log("message",message);
 
 
 
-//   useEffect(()=>{
-// FetchConversation()
-//   },[])
-//  console.log(orbitHistory);
- 
 
 
 
@@ -239,7 +234,7 @@ console.log("message",message);
         logs,
 
         // Socket message function
-        sendOrbitMessage,orbitResponse,FetchConversation,messages,setMessages,orbitHistory
+        sendOrbitMessage, orbitResponse, FetchConversation, messages, setMessages, orbitHistory
       }}
     >
       {children}

@@ -17,6 +17,10 @@ export const receiveOrbitMessage = async (socket, data) => {
         console.log("Message:", message);
         
 
+      await Conversation.create({
+        type:"user",
+        text:message
+      })
         const answer = await GroqLLM_Controller(message);
 
        
@@ -28,8 +32,8 @@ export const receiveOrbitMessage = async (socket, data) => {
         });
 
       await Conversation.create({
-        user:message,
-        orbit:answer
+      type:"orbit",
+       text:answer
       })
     
 

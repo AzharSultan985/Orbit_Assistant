@@ -2,9 +2,12 @@ import mongoose from "mongoose";
 
 const ConversationSchema = new mongoose.Schema(
 {
-user:String,
-orbit:String
+type:{
+    type:String,
+    enum:["user","orbit"]
+},
 
+text:String
 },{
     timestamps:true
 }
