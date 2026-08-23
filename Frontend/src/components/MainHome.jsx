@@ -8,11 +8,14 @@ import ChooseMIC_Lis from "./chooseMIC";
 import NetworkAndSettings from "./systemcontrol";
 import OrbitFace from "./orbitface";
 import AIProcessPanel from "./Atprocesspanel";
+import { useSystem } from "../Context/orbitContext";
 
 export default function MainHome() {
 
-  const [orbitMaximized, setOrbitMaximized] = useState(false);
-
+  const {
+    orbitMaximized
+    
+  } = useSystem();
   return (
     <main className="w-screen h-screen box-border overflow-hidden text-white p-3">
 
@@ -64,11 +67,7 @@ export default function MainHome() {
         {/* COLUMN 3 */}
         <section className="min-w-0 min-h-0 h-full rounded-2xl overflow-hidden">
 
-          <OrbitRes
-            maximized={orbitMaximized}
-            onMaximize={() => setOrbitMaximized(true)}
-            onMinimize={() => setOrbitMaximized(false)}
-          />
+          <OrbitRes />
 
         </section>
 
@@ -83,11 +82,7 @@ export default function MainHome() {
 
         <div className="fixed inset-0 z-[9999] bg-black">
 
-          <OrbitRes
-            maximized={true}
-            onMaximize={() => {}}
-            onMinimize={() => setOrbitMaximized(false)}
-          />
+          <OrbitRes/>
 
         </div>
 

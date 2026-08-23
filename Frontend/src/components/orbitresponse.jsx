@@ -1,11 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useSystem } from "../Context/orbitContext";
 import { Maximize2 ,Minimize2} from "lucide-react";
 
-export default function OrbitRes(  maximized = false,
-  onMaximize,
-  onMinimize,) {
+export default function OrbitRes(  isMaximized) {
   const [userPrompt, setUserPrompt] = useState("");
   const [isThinking, setIsThinking] = useState(false);
 
@@ -13,7 +11,7 @@ export default function OrbitRes(  maximized = false,
 
   const {
     sendOrbitMessage,
-    orbitResponse,messages, setMessages,FetchConversation
+    orbitResponse,messages, setMessages,orbitMaximized, setOrbitMaximized
   } = useSystem();
 
   // ==============================
@@ -45,13 +43,9 @@ export default function OrbitRes(  maximized = false,
 
 
 
-
-    useEffect(()=>{
-  FetchConversation()
-    },[])
-   console.log(messages);
-
-
+ const toggleMaximise = useCallback(() => {
+    setOrbitMaximized((prev) => !prev);
+  }, [setOrbitMaximized]);
 
 
   // ==============================
@@ -114,6 +108,7 @@ export default function OrbitRes(  maximized = false,
         </h2>
 
         <button
+        onClick={toggleMaximise}
           className="
             p-2
             cursor-pointer
@@ -122,7 +117,11 @@ export default function OrbitRes(  maximized = false,
             transition
           "
         >
+          {orbitMaximized?
+          <Minimize2 size={20}     />:
           <Maximize2 size={20} />
+          
+        }
         </button>
 
       </div>

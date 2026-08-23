@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
 const SystemContext = createContext(null);
@@ -22,6 +22,7 @@ export const SystemProvider = ({ children }) => {
 
   const [messages, setMessages] = useState([]);
 
+  const [orbitMaximized, setOrbitMaximized] = useState(false);
 
 
   // ==============================
@@ -109,6 +110,8 @@ export const SystemProvider = ({ children }) => {
           text: data.response,
         }
       );
+
+      // FetchConversation()
     };
 
 
@@ -187,30 +190,36 @@ export const SystemProvider = ({ children }) => {
 
 
 
-  const FetchConversation = async () => {
-    try {
-      setLoading(true);
+const FetchConversation = useCallback(async () => {
+  try {
+    setLoading(true);
 
-      const res = await fetch(
-        `${BACKEND_URL}/api/v1/orbit/conversation`
-      );
+    const res = await fetch(
+      `${BACKEND_URL}/api/v1/orbit/conversation`
+    );
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (!data.success) {
-        throw new Error("Failed to fetch conversation");
-      }
-
-      setMessages(data.history);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    if (!data.success) {
+      throw new Error("Failed to fetch conversation");
     }
-  };
+
+    setMessages(data.history);
+
+  } catch (err) {
+    setError(err.message);
+
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
 
 
+
+    useEffect(()=>{
+  FetchConversation()
+    },[])
 
 
 
@@ -234,7 +243,7 @@ export const SystemProvider = ({ children }) => {
         logs,
 
         // Socket message function
-        sendOrbitMessage, orbitResponse, FetchConversation, messages, setMessages, orbitHistory
+        sendOrbitMessage, orbitResponse, FetchConversation, messages, setMessages, orbitHistory,orbitMaximized, setOrbitMaximized
       }}
     >
       {children}
