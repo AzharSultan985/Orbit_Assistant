@@ -10,6 +10,7 @@ from controller.Speak_to_Text import Speech_to_text
 from controller.speak import speak
 from controller.orbitMode import OrbitMode
 from ModelController.GroqLLM import OrbitAgent
+from controller.sendCmdToNode import Node_Mess_save
 # from controller.print import print
 
 
@@ -132,7 +133,9 @@ async def main():
                 f"\nYou said: {text}\n"
             )
 
+            Node_Mess_save(text)
             response = OrbitAgent(text)
+            Node_Mess_save(response,"orbit")
 
             
             await speak(response)
