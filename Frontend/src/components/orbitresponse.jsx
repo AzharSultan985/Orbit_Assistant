@@ -330,7 +330,7 @@ export default function OrbitRes(  isMaximized) {
 
         <div className="flex gap-2">
 
-          <input
+          <textarea
             type="text"
             value={userPrompt}
             onChange={(e) =>
@@ -345,7 +345,7 @@ export default function OrbitRes(  isMaximized) {
             className="
               flex-1
               min-w-0
-              h-10
+              h-20
               px-3
               rounded-xl
               bg-black/40
