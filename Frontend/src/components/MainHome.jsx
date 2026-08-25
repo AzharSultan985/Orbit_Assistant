@@ -14,7 +14,7 @@ export default function MainHome() {
 
   const {
     orbitMaximized
-    
+
   } = useSystem();
   return (
     <main className="w-screen h-screen box-border overflow-hidden text-white p-3">
@@ -63,14 +63,23 @@ export default function MainHome() {
 
         </section>
 
-
         {/* COLUMN 3 */}
-        <section className="min-w-0 min-h-0 h-full rounded-2xl overflow-hidden">
+        <section
+          className={`
+            min-w-0
+            min-h-0
+            h-full
+            rounded-2xl
+            overflow-hidden
 
+            ${orbitMaximized
+              ? "fixed inset-0 z-[9999] bg-black rounded-none"
+              : ""
+            }
+          `}
+        >
           <OrbitRes />
-
         </section>
-
       </div>
 
 
@@ -78,15 +87,7 @@ export default function MainHome() {
           FULLSCREEN ORBIT RESPONSE
       ================================================= */}
 
-      {orbitMaximized && (
 
-        <div className="fixed inset-0 z-[9999] bg-black">
-
-          <OrbitRes/>
-
-        </div>
-
-      )}
 
     </main>
   );
