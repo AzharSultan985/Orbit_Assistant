@@ -51,10 +51,6 @@ api_thread.start()
 
 
 
-# WAKE WORD
-
-
-WAKE_WORD = "orbit"
 
 
 

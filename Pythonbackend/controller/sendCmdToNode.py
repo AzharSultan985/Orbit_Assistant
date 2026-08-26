@@ -5,9 +5,8 @@ NODE_URL="http://localhost:3002/api/v2/orbit/message-save"
 
 
 def Node_Mess_save (cmd:str, type:str ="user"):
-    if not cmd or cmd.strip():
+    if not cmd or not  cmd.strip():
         return None
-
 
 
     payload={
@@ -15,6 +14,7 @@ def Node_Mess_save (cmd:str, type:str ="user"):
         "text":cmd.strip()
     }
 
+    print(payload)
     try:
         response= requests.post(
             NODE_URL,

@@ -4,16 +4,19 @@ import uuid
 import re
 import subprocess
 import pygame
+from pathlib import Path
 
 from controller.orbit_log import orbit_log
 from controller.orbitMode import OrbitMode
 
 
-PIPER_MODEL = "en_US-lessac-medium"
 
 pygame.mixer.init()
 
+BASE_DIR = Path(__file__).resolve().parent.parent
 
+PIPER_EXE = BASE_DIR / "venv312" / "Scripts" / "piper.exe"
+PIPER_MODEL = BASE_DIR / "en_US-lessac-medium.onnx"
 # =====================================================
 # CLEAN TEXT
 # =====================================================
@@ -72,7 +75,7 @@ def clean_text(text):
 
 async def generate_audio(text):
 
-    filename = f"orbit_{uuid.uuid4().hex}.wav"
+    filename = BASE_DIR / f"orbit_{uuid.uuid4().hex}.wav"
 
     try:
 
@@ -82,13 +85,14 @@ async def generate_audio(text):
 
         process = await asyncio.create_subprocess_exec(
 
-            "piper",
+          
+            str(PIPER_EXE),
 
             "--model",
-            PIPER_MODEL,
+          str(PIPER_MODEL),
 
             "--output_file",
-            filename,
+             str(filename),
 
             stdin=asyncio.subprocess.PIPE,
 

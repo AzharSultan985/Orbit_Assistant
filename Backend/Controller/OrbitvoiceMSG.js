@@ -14,7 +14,15 @@ export const  Save_OrbitVoice_Msg= async (req,res)=>{
         type,text
     })
 
-res.status(200).send("message save successfully")    
+res.status(200).send("message save successfully")   
+
+    req.io.emit("orbit:response",  {
+            success: true,
+            response: text,
+            type: type,
+            timestamp: new Date().toISOString(),
+        });
+       
  } catch (error) {
     console.log(error
 
