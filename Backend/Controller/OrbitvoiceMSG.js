@@ -16,7 +16,7 @@ export const  Save_OrbitVoice_Msg= async (req,res)=>{
 
 res.status(200).send("message save successfully")   
 
-    req.io.emit("orbit:response",  {
+    req.io.emit("orbit_voice:response",  {
             success: true,
             response: text,
             type: type,

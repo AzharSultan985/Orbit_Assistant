@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Plus, Clock, CalendarDays, Bell } from "lucide-react";
+import { X, Plus, Clock, CalendarDays, Bell, ChevronDown, ChevronRight } from "lucide-react";
 
 export default function Dailytask() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -7,7 +7,7 @@ export default function Dailytask() {
   const [task, setTask] = useState("");
   const [showDetails, setshowDetails] = useState(false);
 
-
+const [time, setTime] = useState("");
   const [tasks, setTasks] = useState([
     {
       id: 1,
@@ -19,7 +19,7 @@ export default function Dailytask() {
   ]);
 
   const handleAddTask = () => {
-    if (!task.trim() || !date || !time) return;
+    if (!task.trim()  || !time) return;
 
     const newTask = {
       id: Date.now(),
@@ -122,12 +122,21 @@ const toggleshowdetails= () => {
                   <div className="flex justify-between items-center">
 
                     <div className="flex items-center gap-2 min-w-0" onClick={toggleshowdetails}>
+{!showDetails ? (
+  <ChevronRight
+    size={16}
+    strokeWidth={2}
+    className="text-green-400 cursor-pointer transition-transform"
+  />
+) : (
+  <ChevronDown
+    size={16}
+    strokeWidth={2}
+    className="text-green-400 cursor-pointer transition-transform"
+  />
+)}
 
-                      <span className="text-green-400 cursor-pointer" >
-                        ❯
-                      </span>
-
-                      <span className="truncate">
+                      <span className="truncate  cursor-pointer">
                         {item.task}
                       </span>
 
@@ -280,7 +289,7 @@ const toggleshowdetails= () => {
                     rounded-lg
                     bg-black/30
                     border border-cyan-400/30
-                    text-cyan-200
+                    text-white
                     placeholder:text-slate-600
                     outline-none
                     font-mono
@@ -302,7 +311,7 @@ const toggleshowdetails= () => {
 
                 <div>
 
-                  <label className="flex items-center gap-1 text-xs font-mono text-cyan-400/70 mb-2">
+                  <label className="flex items-center gap-1 text-xs font-mono text-white mb-2">
                     <Clock size={12} />
                     TIME
                   </label>
@@ -362,7 +371,8 @@ const toggleshowdetails= () => {
                   font-mono
                   text-sm
                   hover:bg-white/5
-                  transition
+                 cursor-pointer
+                  transition 
                 "
               >
                 Cancel
@@ -370,7 +380,6 @@ const toggleshowdetails= () => {
 
               <button
                 onClick={handleAddTask}
-                disabled={!task.trim() || !date || !time}
                 className="
                   px-5
                   py-2
@@ -382,8 +391,8 @@ const toggleshowdetails= () => {
                   hover:bg-green-400
                   hover:text-black
                   disabled:opacity-30
-                  disabled:cursor-not-allowed
-                  transition
+                 cursor-pointer
+                  transition 
                 "
               >
                 Save Task

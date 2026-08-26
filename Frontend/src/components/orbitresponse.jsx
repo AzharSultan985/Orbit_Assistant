@@ -180,14 +180,14 @@ export default function OrbitRes(  isMaximized) {
                       bg-cyan-500/10
                       border
                       border-cyan-400/30
-                      text-cyan-200
+                      text-white
                       rounded-br-sm
                     `
                     : `
                       bg-green-500/10
                       border
                       border-green-400/30
-                      text-green-300
+                      text-white
                       rounded-bl-sm
                     `
                 }

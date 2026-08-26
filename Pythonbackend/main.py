@@ -131,7 +131,6 @@ async def main():
 
             Node_Mess_save(text)
             response = OrbitAgent(text)
-            Node_Mess_save(response,"orbit")
 
             
             await speak(response)

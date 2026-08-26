@@ -112,6 +112,24 @@ export const SystemProvider = ({ children }) => {
       );
 
     };
+    const handleOrbit_VOICE_Response = (data) => {
+
+      console.log("Orbit voice  response:", data);
+
+      if (!data?.success) {
+        return;
+      }
+
+      setOrbitResponse(
+        {
+          _id: Date.now() + Math.random(),
+          type: data.type,
+
+          text: data.response,
+        }
+      );
+
+    };
 
 
     socket.on("connect", handleConnect);
@@ -119,10 +137,8 @@ export const SystemProvider = ({ children }) => {
 
     socket.on("orbitMode", handleOrbitMode);
     socket.on("orbit:log", handleOrbitLog);
-    socket.on(
-      "orbit:response",
-      handleOrbitResponse
-    );
+    socket.on("orbit:response",handleOrbitResponse);
+    socket.on("orbit_voice:response",handleOrbit_VOICE_Response);
     return () => {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
@@ -132,6 +148,10 @@ export const SystemProvider = ({ children }) => {
       socket.off(
         "orbit:response",
         FetchConversation
+      );
+      socket.off(
+        "orbit_voice:response",
+        handleOrbit_VOICE_Response
       );
     };
   }, []);

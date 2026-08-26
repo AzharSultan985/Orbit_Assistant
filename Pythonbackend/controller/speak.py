@@ -8,6 +8,7 @@ from pathlib import Path
 
 from controller.orbit_log import orbit_log
 from controller.orbitMode import OrbitMode
+from controller.sendCmdToNode import Node_Mess_save
 
 
 
@@ -238,6 +239,7 @@ async def speak(text):
 
         # Play complete response
         await play_audio(filename)
+        Node_Mess_save(text,"orbit")
 
     except Exception as e:
 
