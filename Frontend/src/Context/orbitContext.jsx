@@ -18,9 +18,9 @@ export const SystemProvider = ({ children }) => {
   const [OrbitMode, setOrbitMode] = useState("idle");
   const [logs, setLogs] = useState([]);
   const [orbitResponse, setOrbitResponse] = useState(null);
-  const [orbitHistory, setOrbitHistory] = useState(null);
 
   const [messages, setMessages] = useState([]);
+  const [tasks, setTasks] = useState([]);
 
   const [orbitMaximized, setOrbitMaximized] = useState(false);
 
@@ -236,10 +236,85 @@ const FetchConversation = useCallback(async () => {
 
 
 
+
+
+
+
+
+
+
+// save tasks
+
+  const HandleSaveTask = async (payload) => {
+    try {
+      const response = await fetch(
+        `${BACKEND_URL}/api/v1/orbit/task-save`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            payload,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      console.log("task :", data.message);
+
+    
+    } catch (error) {
+      console.error("task save  error:", error);
+    }
+  };
+
+
+
+
+
+
+const HandleFetchTasks = useCallback(async () => {
+  try {
+    setLoading(true);
+
+    const res = await fetch(
+      `${BACKEND_URL}/api/v1/orbit/fetch-tasks`
+    );
+
+    const data = await res.json();
+
+    if (!data.success) {
+      throw new Error("Failed to fetch tasks");
+    }
+console.log(res)
+       if (data.success) {
+      setTasks(data.tasks);
+  HandleFetchTasks()
+
+    } else {
+      setTasks([]);
+    }
+
+  } catch (err) {
+    setError(err.message);
+
+  } finally {
+    setLoading(false);
+  }
+}, []);
+
+
+
+console.log(tasks)
+
+
+
     useEffect(()=>{
   FetchConversation()
-    },[FetchConversation])
-
+  HandleFetchTasks()
+    },[HandleFetchTasks,FetchConversation])
 
 
 
@@ -262,13 +337,19 @@ const FetchConversation = useCallback(async () => {
         logs,
 
         // Socket message function
-        sendOrbitMessage, orbitResponse, FetchConversation, messages, setMessages, orbitHistory,orbitMaximized, setOrbitMaximized
+        sendOrbitMessage, orbitResponse, FetchConversation, messages, setMessages,orbitMaximized, setOrbitMaximized,HandleSaveTask,tasks
       }}
     >
       {children}
     </SystemContext.Provider>
   );
 };
+
+
+
+
+
+
 
 export const useSystem = () => {
   const context = useContext(SystemContext);

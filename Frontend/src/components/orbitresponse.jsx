@@ -147,7 +147,7 @@ export default function OrbitRes(  isMaximized) {
         {messages?.map((message) => (
 
           <div
-            key={message.id}
+            key={message._id}
             className={`flex ${
               message.type === "user"
                 ? "justify-end"

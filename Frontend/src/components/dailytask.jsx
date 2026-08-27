@@ -1,24 +1,19 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { X, Plus, Clock, CalendarDays, Bell, ChevronDown, ChevronRight } from "lucide-react";
+import SystemContext from "../Context/orbitContext";
 
 export default function Dailytask() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [task, setTask] = useState("");
   const [showDetails, setshowDetails] = useState(false);
+    const { HandleSaveTask ,tasks} = useContext(SystemContext);
+  
 
 const [time, setTime] = useState("");
-  const [tasks, setTasks] = useState([
-    {
-      id: 1,
-      task: "Cricket",
-    
-      time: "18:00",
-      
-    },
-  ]);
 
-  const handleAddTask = () => {
+
+  const handleAddTask =async  () => {
     if (!task.trim()  || !time) return;
 
     const newTask = {
@@ -28,8 +23,8 @@ const [time, setTime] = useState("");
      
     };
 
-    setTasks((prev) => [...prev, newTask]);
-
+    // setTasks((prev) => [...prev, newTask]);
+await HandleSaveTask(newTask)
     // Reset fields
     setTask("");
 
@@ -40,7 +35,7 @@ const [time, setTime] = useState("");
   };
 
   const handleDeleteTask = (id) => {
-    setTasks((prev) => prev.filter((item) => item.id !== id));
+    // setTasks((prev) => prev.filter((item) => item.id !== id));
   };
 const toggleshowdetails= () => {
     setshowDetails((prev) => !prev);
