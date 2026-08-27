@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { X, Plus, Clock, CalendarDays, Bell, ChevronDown, ChevronRight } from "lucide-react";
 import SystemContext from "../Context/orbitContext";
 
@@ -6,40 +6,58 @@ export default function Dailytask() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [task, setTask] = useState("");
-  const [showDetails, setshowDetails] = useState(false);
-    const { HandleSaveTask ,tasks} = useContext(SystemContext);
-  
+  const [showDetails, setshowDetails] = useState(null);
+  const { HandleSaveTask, tasks, HandleDeleteTask ,FetchConversation,HandleFetchTasks} = useContext(SystemContext);
 
-const [time, setTime] = useState("");
+const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+const [selectedTask, setSelectedTask] = useState(null);
+  const [time, setTime] = useState("");
+
+    
 
 
-  const handleAddTask =async  () => {
-    if (!task.trim()  || !time) return;
+  const handleAddTask = async () => {
+    if (!task.trim() || !time) return;
 
     const newTask = {
       id: Date.now(),
-      task: task.trim(),  
+      task: task.trim(),
       time,
-     
+
     };
 
     // setTasks((prev) => [...prev, newTask]);
-await HandleSaveTask(newTask)
+    await HandleSaveTask(newTask)
     // Reset fields
     setTask("");
 
     setTime("");
-   
+
 
     setIsModalOpen(false);
   };
 
-  const handleDeleteTask = (id) => {
-    // setTasks((prev) => prev.filter((item) => item.id !== id));
-  };
-const toggleshowdetails= () => {
-    setshowDetails((prev) => !prev);
-  };
+  const confirmDeleteTask = (task) => {
+  setSelectedTask(task);
+  setDeleteModalOpen(true);
+};
+
+const handleDeleteTask = async () => {
+  if (!selectedTask?._id) return;
+
+  try {
+    await HandleDeleteTask(selectedTask._id);
+
+    setDeleteModalOpen(false);
+    setSelectedTask(null);
+  } catch (error) {
+    console.error("Delete task error:", error);
+  }
+};
+
+  const toggleshowdetails = (id) => {
+  setshowDetails((prev) => (prev === id ? null : id));
+};
   return (
     <>
       {/* ==============================
@@ -116,20 +134,20 @@ const toggleshowdetails= () => {
 
                   <div className="flex justify-between items-center">
 
-                    <div className="flex items-center gap-2 min-w-0" onClick={toggleshowdetails}>
-{!showDetails ? (
-  <ChevronRight
-    size={16}
-    strokeWidth={2}
-    className="text-green-400 cursor-pointer transition-transform"
-  />
-) : (
-  <ChevronDown
-    size={16}
-    strokeWidth={2}
-    className="text-green-400 cursor-pointer transition-transform"
-  />
-)}
+                    <div className="flex items-center gap-2 min-w-0" onClick={() => toggleshowdetails(item._id)}>
+                  {showDetails !== item._id ? (
+                        <ChevronRight
+                          size={16}
+                          strokeWidth={2}
+                          className="text-green-400 cursor-pointer transition-transform"
+                        />
+                      ) : (
+                        <ChevronDown
+                          size={16}
+                          strokeWidth={2}
+                          className="text-green-400 cursor-pointer transition-transform"
+                        />
+                      )}
 
                       <span className="truncate  cursor-pointer">
                         {item.task}
@@ -138,7 +156,7 @@ const toggleshowdetails= () => {
                     </div>
 
                     <button
-                      onClick={() => handleDeleteTask(item.id)}
+                      onClick={() => confirmDeleteTask(item)}
                       className="
                         px-2
                         py-1
@@ -157,18 +175,14 @@ const toggleshowdetails= () => {
 
                   </div>
 
-{showDetails && 
-                  <div className="flex items-center gap-4 ml-5 mt-1 text-[11px] text-cyan-400/60">
-
-              
-
-                    <span className="flex items-center gap-1">
-                      <Clock size={11} />
-                      {item.time}
-                    </span>
-
-                  </div>
-}
+               {showDetails === item._id && (
+  <div className="flex items-center gap-4 ml-5 mt-1 text-[11px] text-cyan-400/60">
+    <span className="flex items-center gap-1">
+      <Clock size={11} />
+      {item.time}
+    </span>
+  </div>
+)}
                 </li>
 
               ))}
@@ -186,7 +200,7 @@ const toggleshowdetails= () => {
           ADD TASK MODAL
       ============================== */}
 
-      
+
       {isModalOpen && (
 
         <div
@@ -301,7 +315,7 @@ const toggleshowdetails= () => {
 
               <div className="grid grid-cols-2 gap-3">
 
-            
+
 
 
                 <div>
@@ -322,7 +336,7 @@ const toggleshowdetails= () => {
                       rounded-lg
                       bg-black/30
                       border border-cyan-400/30
-                      text-cyan-200
+                      text-white
                       outline-none
                       font-mono
                       text-sm
@@ -335,9 +349,9 @@ const toggleshowdetails= () => {
               </div>
 
 
-              
 
-              
+
+
 
             </div>
 
@@ -400,7 +414,112 @@ const toggleshowdetails= () => {
         </div>
 
       )}
+{deleteModalOpen && (
+  <div
+    className="
+      fixed
+      inset-0
+      z-[9999]
+      flex
+      items-center
+      justify-center
+      bg-black/70
+      backdrop-blur-sm
+      p-4
+    "
+    onClick={() => {
+      setDeleteModalOpen(false);
+      setSelectedTask(null);
+    }}
+  >
+    <div
+      className="
+        w-full
+        max-w-sm
+        bg-[#0c1c1f]
+        border
+        border-red-400/40
+        rounded-xl
+        shadow-[0_0_40px_rgba(255,0,0,0.12)]
+        overflow-hidden
+      "
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-red-400/20">
+        <h2 className="text-red-400 font-mono tracking-widest text-lg">
+          DELETE TASK
+        </h2>
 
+        <p className="text-xs text-slate-500 mt-1 font-mono">
+          Confirmation required
+        </p>
+      </div>
+
+      {/* Body */}
+      <div className="px-5 py-6">
+        <p className="text-sm text-cyan-200 font-mono">
+          Are you sure you want to delete this task?
+        </p>
+
+        {selectedTask && (
+          <div className="mt-4 px-3 py-2 border border-cyan-400/20 rounded-lg bg-black/20">
+            <p className="text-cyan-300 font-mono text-sm">
+              {selectedTask.task}
+            </p>
+
+            <p className="text-xs text-cyan-400/50 mt-1">
+              {selectedTask.time}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="flex justify-end gap-2 px-5 py-4 border-t border-red-400/20">
+        <button
+          onClick={() => {
+            setDeleteModalOpen(false);
+            setSelectedTask(null);
+          }}
+          className="
+            px-4
+            py-2
+            rounded-lg
+            border border-slate-600
+            text-slate-400
+            font-mono
+            text-sm
+            hover:bg-white/5
+            transition
+            cursor-pointer
+          "
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={handleDeleteTask}
+          className="
+            px-5
+            py-2
+            rounded-lg
+            border border-red-400/60
+            text-red-400
+            font-mono
+            text-sm
+            hover:bg-red-400
+            hover:text-black
+            transition
+            cursor-pointer
+          "
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </>
   );
 }

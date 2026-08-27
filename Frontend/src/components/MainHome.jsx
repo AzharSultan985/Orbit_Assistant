@@ -9,15 +9,37 @@ import NetworkAndSettings from "./systemcontrol";
 import OrbitFace from "./orbitface";
 import AIProcessPanel from "./Atprocesspanel";
 import { useSystem } from "../Context/orbitContext";
+import OrbitAlert from "./OrbitAlert";
+import OrbitLoader from "./OrbitLoader";
 
 export default function MainHome() {
 
   const {
-    orbitMaximized
+    orbitMaximized,alert,setAlert ,loading
 
   } = useSystem();
   return (
     <main className="w-screen h-screen box-border overflow-hidden text-white p-3">
+<OrbitAlert
+  show={alert.show}
+  type={alert.type}
+  title={alert.title}
+  message={alert.message}
+  duration={1000}
+  onClose={() =>
+    setAlert((prev) => ({
+      ...prev,
+      show: false,
+    }))
+  }
+/>
+{
+  loading&&
+<OrbitLoader
+  text="ORBIT IS PROCESSING"
+  fullscreen
+/>
+}
 
       {/* =================================================
           NORMAL DASHBOARD

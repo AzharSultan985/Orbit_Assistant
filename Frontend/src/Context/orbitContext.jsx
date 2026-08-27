@@ -12,7 +12,7 @@ const socket = io(BACKEND_URL, {
 
 export const SystemProvider = ({ children }) => {
   const [systemInfo, setSystemInfo] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [MicEnabled, setMicEnabled] = useState(true);
   const [error, setError] = useState(null);
   const [OrbitMode, setOrbitMode] = useState("idle");
@@ -24,14 +24,18 @@ export const SystemProvider = ({ children }) => {
 
   const [orbitMaximized, setOrbitMaximized] = useState(false);
 
-
+const [alert, setAlert] = useState({
+  show: false,
+  type: "success",
+  title: "TASK SAVED",
+  message: "Daily task has been added successfully.",
+});
   // ==============================
   // SYSTEM INFO
   // ==============================
 
   const fetchSystemInfo = async () => {
     try {
-      setLoading(true);
 
       const res = await fetch(
         `${BACKEND_URL}/api/v1/orbit/system-info`
@@ -46,9 +50,7 @@ export const SystemProvider = ({ children }) => {
       setSystemInfo(data);
     } catch (err) {
       setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } 
   };
 
   useEffect(() => {
@@ -211,7 +213,7 @@ export const SystemProvider = ({ children }) => {
 
 const FetchConversation = useCallback(async () => {
   try {
-    setLoading(true);
+    
 
     const res = await fetch(
       `${BACKEND_URL}/api/v1/orbit/conversation`
@@ -229,7 +231,7 @@ const FetchConversation = useCallback(async () => {
     setError(err.message);
 
   } finally {
-    setLoading(false);
+  
   }
 }, []);
 
@@ -247,6 +249,8 @@ const FetchConversation = useCallback(async () => {
 
   const HandleSaveTask = async (payload) => {
     try {
+            setLoading(true);
+
       const response = await fetch(
         `${BACKEND_URL}/api/v1/orbit/task-save`,
         {
@@ -262,11 +266,28 @@ const FetchConversation = useCallback(async () => {
 
       const data = await response.json();
 
-      console.log("task :", data.message);
+      if (data.success) {
+        
+        setAlert({
+          show: true,
+          type: "success",
+          message:  data.message,
+        });
+        HandleFetchTasks()
+      }else{
 
-    
+      setAlert({
+          show: true,
+          type: "error",
+
+          message: data.message,
+        });
+      }
     } catch (error) {
       console.error("task save  error:", error);
+    }finally{
+      setLoading(false);
+
     }
   };
 
@@ -277,7 +298,7 @@ const FetchConversation = useCallback(async () => {
 
 const HandleFetchTasks = useCallback(async () => {
   try {
-    setLoading(true);
+    
 
     const res = await fetch(
       `${BACKEND_URL}/api/v1/orbit/fetch-tasks`
@@ -291,7 +312,6 @@ const HandleFetchTasks = useCallback(async () => {
 console.log(res)
        if (data.success) {
       setTasks(data.tasks);
-  HandleFetchTasks()
 
     } else {
       setTasks([]);
@@ -300,10 +320,47 @@ console.log(res)
   } catch (err) {
     setError(err.message);
 
+  }
+}, []);
+
+const HandleDeleteTask =async (id) => {
+  try {
+    setLoading(true);
+
+    const res = await fetch(
+      `${BACKEND_URL}/api/v1/orbit/delete-task/${id}`,{
+        method:"delete"
+      }
+    );
+
+    const data = await res.json();
+
+    if (!data.success) {
+      throw new Error("Failed to delete tasks");
+    }
+    if (data.success) {
+        
+        setAlert({
+          show: true,
+          type: "success",
+          message:  data.message,
+        });
+        HandleFetchTasks()
+      }
+      setAlert({
+          show: true,
+          type: "error",
+
+          message: data.message,
+        });
+
+  } catch (err) {
+    setError(err.message);
+
   } finally {
     setLoading(false);
   }
-}, []);
+};
 
 
 
@@ -311,12 +368,10 @@ console.log(tasks)
 
 
 
-    useEffect(()=>{
-  FetchConversation()
+useEffect(()=>{
   HandleFetchTasks()
-    },[HandleFetchTasks,FetchConversation])
-
-
+  HandleFetchTasks()
+    },[])
 
 
 
@@ -337,7 +392,8 @@ console.log(tasks)
         logs,
 
         // Socket message function
-        sendOrbitMessage, orbitResponse, FetchConversation, messages, setMessages,orbitMaximized, setOrbitMaximized,HandleSaveTask,tasks
+        sendOrbitMessage, orbitResponse, FetchConversation, messages, setMessages,orbitMaximized, setOrbitMaximized,HandleSaveTask,tasks,HandleFetchTasks
+        ,HandleDeleteTask,setAlert,alert
       }}
     >
       {children}

@@ -13,3 +13,9 @@
     border-radius: 8px;
   }
 }
+/* Time input clock icon */
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 1;
+  cursor: pointer;
+}
