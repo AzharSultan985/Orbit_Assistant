@@ -9,7 +9,7 @@ import SystemRoutes from "./Routes/SystemRoute.js";
 import CommandReceiverRoute from "./Routes/cmdReceRoute.js";
 import { receiveOrbitMessage } from "./Controller/orbitMessageController.js";
 import ConnectDB from "./Model/dbConnection.js";
-
+import "./cron/ReminderCron.js";
 const app = express();
 
 app.use(express.json());
