@@ -57,6 +57,11 @@ For Message:
 For General question
 -never use any tool 
 -use direct llm 
+
+
+
+For task 
+- use received task detials you send notifcation message to Azhar , write short message according to task 
 After the tool completes, give a short natural confirmation.
 
 important Note:

@@ -20,11 +20,25 @@ const now =new Date()
     const currentTime = `${currentHours}:${currentMinutes}`;
 for(const task of tasks){
 console.log(now);
+const lastIndex = task.DailyReport.length - 1;
+const lastReport = task.DailyReport[lastIndex]
 
-    if(task.time <=currentTime){
+    if(task.time <=currentTime && lastReport.status ==="pending"){
+        const response = await  NotifyReminder(task)
+        if (response && response.success){
+         await Tasks.updateOne(
+            {_id:task._id},
+            {
+                $set:{
+                    [`DailyReport.${lastIndex}.status`]:"confirmed"
+                }
+            }
+         )
+        }
 
-       await  NotifyReminder(task)
     }
+console.log(`Task ${task._id} marked as confirmed.`);
+
 }
  
 
