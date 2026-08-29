@@ -2,51 +2,73 @@
 import { NotifyReminder } from "../Controller/notifyReminder.js"
 import Tasks from "../Model/tasksave.js"
 
-export const Reminder=async ()=>{
-try {
-    
-const tasks= await Tasks.find()
-const now =new Date()
-  // Pakistan time (UTC + 5)
-    const pakistanNow = new Date(
-      now.toLocaleString("en-US", {
-        timeZone: "Asia/Karachi",
-      })
-    );
+export const ScheduleReminder = async (task) => {
+    try {
+        const scheduleNext = () => {
+            const now = new Date()
 
-    const currentHours = String(pakistanNow.getHours()).padStart(2, "0");
-    const currentMinutes = String(pakistanNow.getMinutes()).padStart(2, "0");
+            const CurrentTime = new Date(
+                now.toLocaleString("en-US", {
+                    timeZone: "Asia/Karachi"
+                }))
 
-    const currentTime = `${currentHours}:${currentMinutes}`;
-for(const task of tasks){
-console.log(now);
-const lastIndex = task.DailyReport.length - 1;
-const lastReport = task.DailyReport[lastIndex]
+            const [hours, minutes] = task.time.split(":")
+            const target = new Date(CurrentTime)
 
-    if(task.time <=currentTime && lastReport.status ==="pending"){
-        const response = await  NotifyReminder(task)
-        if (response && response.success){
-         await Tasks.updateOne(
-            {_id:task._id},
-            {
-                $set:{
-                    [`DailyReport.${lastIndex}.status`]:"confirmed"
-                }
+            target.setHours(Number(hours))
+            target.setMinutes(Number(minutes))
+            target.setSeconds(0)
+            target.setMilliseconds(0)
+
+
+            if (target <= CurrentTime) {
+                target.setDate(target.getDate() + 1)
+
             }
-         )
+            const delay = target.getTime() - CurrentTime.getTime();
+
+            console.log(
+                `⏰ ${task.task} scheduled in ${Math.round(delay / 1000)} seconds`
+            );
+
+
+
+
+            setTimeout(async () => {
+                try {
+                    console.log("Reminder ", task.task)
+                    const response = await NotifyReminder(task)
+                    if (response?.success) {
+                        await Tasks.findByIdAndUpdate(
+                            task._id, {
+                            $push: {
+                                DailyReport: {
+                                    task: task.task,
+                                    status: "pending", date: new Date(),
+                                },
+                            },
+                        }, { new: true }); 
+                        
+                        console.log("📊 Daily report updated");
+                    }
+
+
+                    scheduleNext()
+
+                } catch (error) {
+                    console.error(error)
+                    scheduleNext()
+
+                }
+            }, delay)
+
         }
+        scheduleNext()
 
+
+
+    } catch (error) {
+        console.log(error)
     }
-console.log(`Task ${task._id} marked as confirmed.`);
-
-}
- 
-
-
-
-
-} catch (error) {
-    console.log(error)
-}
 
 }

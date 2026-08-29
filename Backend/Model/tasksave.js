@@ -6,8 +6,8 @@ const TaskSchema = mongoose.Schema({
     DailyReport:[
         {
         task :String,
-        status : {type:"String",default:"pending"},
-        date: { type: String, },
+        status : {type:"String",default:"pending",enum: ["pending", "completed", "missed"],},
+        date: { type: Date,default:Date.now },
     }]
 
 

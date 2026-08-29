@@ -220,7 +220,6 @@ async def speak(text):
     if not text:
         return
 
-    await OrbitMode("speaking")
 
     filename = None
 
@@ -238,7 +237,10 @@ async def speak(text):
             return
 
         # Play complete response
+        await OrbitMode("speaking")
+
         await play_audio(filename)
+
         Node_Mess_save(text,"orbit")
 
     except Exception as e:

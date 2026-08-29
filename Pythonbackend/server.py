@@ -3,6 +3,7 @@ from fastapi import FastAPI,HTTPException
 from pydantic import BaseModel
 from controller.orbit_log import orbit_log
 from ModelController.GroqLLM import OrbitAgent
+from controller.speak import speak
 app = FastAPI()
 
 # Shared state
@@ -54,6 +55,7 @@ async def NotifyReminder(data:TaskRequest):
         prompt_text = f"Reminder Alert: The user has scheduled task '{data.task}' at time '{data.time}'. Please notify the user via whatsapp mesage to Azhar"
         response = OrbitAgent(prompt_text)
         if(response):
+            await speak(f"Azhar! It's your time for your task {data.task} ") 
             return {
                 "success": True,
                 "message": "Reminder processed successfully"

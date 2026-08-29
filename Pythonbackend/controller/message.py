@@ -171,6 +171,14 @@ def send_whatsapp_message(recipient, message):
             f"Message sent to {recipient}."
         )
 
+        # close whatsapp
+        try:
+            window.close()
+            time.sleep(1)
+            orbit_log("whatsapp close")
+        except Exception as e :
+            orbit_log(f"whatsapp not close {e}")
+            
         return True
 
     except Exception as e:
