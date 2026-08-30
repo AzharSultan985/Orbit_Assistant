@@ -40,9 +40,6 @@ async def is_mic(data: MicRequest):
     }
 
 
-
-
-
 @app.post("/api/v2/orbit/notify")
 async def NotifyReminder(data:TaskRequest):
     try:

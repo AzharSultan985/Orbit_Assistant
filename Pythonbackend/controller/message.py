@@ -170,7 +170,13 @@ def send_whatsapp_message(recipient, message):
         orbit_log(
             f"Message sent to {recipient}."
         )
+        for _ in range(11):
+            pyautogui.press("tab")
+            time.sleep(0.2)
 
+
+        pyautogui.press("enter")
+        time.sleep(2)
         # close whatsapp
         try:
             window.close()

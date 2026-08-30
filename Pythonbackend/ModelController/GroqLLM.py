@@ -6,6 +6,7 @@ from langchain_groq import ChatGroq
 from langchain.agents import create_agent
 from ModelController.Tools.webSearch import web_search
 from ModelController.Tools.whatsapp_tools import Send_Message_Tool
+from ModelController.Tools.reminderSaveTool import SaveTask
 
 
 
@@ -24,7 +25,8 @@ llm =ChatGroq(
 # Tools/
 tools =[
   web_search,
-  Send_Message_Tool
+  Send_Message_Tool,
+  SaveTask
 ]
 
 
@@ -63,6 +65,8 @@ For General question
 For task 
 - use received task detials you send notifcation message to Azhar , write short message according to task 
 After the tool completes, give a short natural confirmation.
+when user say for save reminder or task you can used tool SaveTask and send just task and time in  time send in hour and mintue form like 10:30 AM/PM 
+
 
 important Note:
  if user query come in hindi/urdu you must generate response in English/Roman urdu. can not directly urdu and hindi

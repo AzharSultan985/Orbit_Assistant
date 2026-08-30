@@ -90,11 +90,20 @@ async def main():
 
         try:
             if not server.mic_enabled:
+                orbit_active=False
                 await OrbitMode("idle")
                 await asyncio.sleep(0.3)
-            audio_file = await record_audio()
+                audio_file = await record_audio()
+                continue
 
+
+            audio_file = await record_audio()
+            
+
+            orbit_active=True
             if not audio_file:
+
+
 
                 print(
                     "No command detected." )
@@ -134,10 +143,6 @@ async def main():
 
             
             await speak(response)
-
-
-
-
 
             await OrbitMode(
                 "listening"

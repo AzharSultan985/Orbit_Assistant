@@ -16,7 +16,10 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-leaflet": "^5.0.0",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.18.2",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1",
     "socket.io-client": "^4.8.3",
     "systeminformation": "^5.33.1"
   },

@@ -4,7 +4,7 @@ import React from "react";
 import MainHome from "./components/MainHome";
 import {Routes,Route} from "react-router-dom"
 import OrbitRes from "./components/orbitresponse";
-import LoginComponent from "./components/login";
+import CodeRun from "./components/codeRun";
 function App() {
   const [spinner, setspinner] = useState(false);
    if (!spinner) {
@@ -23,6 +23,7 @@ function App() {
           element={<MainHome />}
         />
 <Route  path="/max-orbit-screen" element={<OrbitRes/>}/>
+<Route  path="/run-code" element={<CodeRun/>}/>
 
 
 

@@ -120,7 +120,7 @@ const handleDeleteTask = async () => {
               {tasks.map((item) => (
 
                 <li
-                  key={item.id}
+                  key={item._id}
                   className="
                     group
                     px-2
