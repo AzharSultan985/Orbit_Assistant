@@ -129,8 +129,8 @@ async def record_audio():
                 "No speech detected."
             )
 
-            if os.path.exists(filename):
-                os.remove(filename)
+        if os.path.exists(filename):
+            os.remove(filename)
 
             return None
 
@@ -156,14 +156,15 @@ async def record_audio():
         )
 
         return filename
-
+        if os.path.exists(filename):
+            os.remove(filename)
     except Exception as e:
 
         print(
             f"Microphone error: {e}"
         )
 
-        if os.path.exists(filename):
-            os.remove(filename)
-
+    
         return None
+
+            

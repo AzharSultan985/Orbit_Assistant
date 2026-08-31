@@ -5,6 +5,10 @@ export const DeleteTaskController = async (req,res)=>{
     try {
         const taskid = req.params.id
         const response =await  Tasks.findByIdAndDelete(taskid)
+
+  // Cancel setTimeout first
+
+
     if (!response ) {
         return res.send ({
             success:false,

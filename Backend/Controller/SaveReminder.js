@@ -5,10 +5,11 @@ import { ScheduleReminder } from "../services/Reminder.js"
 export const SaveReminder = async (req, res) => {
     try {
         const task = req.body
+            console.log(task)
 
         const savetask = await Tasks.create(
             {
-                task: task.task,
+                task: task.tasks,
                 time: task.time
             }
         )
@@ -17,9 +18,9 @@ export const SaveReminder = async (req, res) => {
                 success:true,
                 message:`Azhar! ${task.task} save successfully!`
             })
-              ScheduleReminder(response);
-            
             console.log(savetask)
+              ScheduleReminder(savetask);
+            
         }
     } catch (error) {
         console.error(error)

@@ -48,8 +48,8 @@ async def NotifyReminder(data:TaskRequest):
 
         # If OrbitAgent is an async function, use 'await OrbitAgent(task_dict)'
         # If it is synchronous, call it directly:
-
-        prompt_text = f"Reminder Alert: The user has scheduled task '{data.task}' at time '{data.time}'. Please notify the user via whatsapp mesage to Azhar"
+ 
+        prompt_text = f"Reminder Alert: The user has scheduled task '{data.task}' at time '{data.time}'. Please notify the user via whatsapp mesage to Azhar and also return third parameter iscall=true"
         response = OrbitAgent(prompt_text)
         if(response):
             await speak(f"Azhar! It's your time for your task {data.task} ") 

@@ -2,8 +2,10 @@ import Tasks from "../Model/tasksave.js";
 
 export const FetchTasks = async (req, res) => {
   try {
-    const tasks = await Tasks.find();
 
+
+    const tasks = await Tasks.find();
+console.log
     if (tasks.length === 0) {
       return res.status(404).json({
         success: false,

@@ -7,6 +7,7 @@ from langchain.agents import create_agent
 from ModelController.Tools.webSearch import web_search
 from ModelController.Tools.whatsapp_tools import Send_Message_Tool
 from ModelController.Tools.reminderSaveTool import SaveTask
+from ModelController.Tools.fetchtaskTool import FetchTasks
 
 
 
@@ -26,7 +27,8 @@ llm =ChatGroq(
 tools =[
   web_search,
   Send_Message_Tool,
-  SaveTask
+  SaveTask,
+  FetchTasks
 ]
 
 
@@ -66,7 +68,12 @@ For task
 - use received task detials you send notifcation message to Azhar , write short message according to task 
 After the tool completes, give a short natural confirmation.
 when user say for save reminder or task you can used tool SaveTask and send just task and time in  time send in hour and mintue form like 10:30 AM/PM 
+send in json like {tasks:"task note", time:"time"}
 
+
+
+for find task and reminder 
+when user ask for what the next task or what task comingup and anything ask about today task info you have access to use tool  (FetchTasks) to fetch all task and analysis and give answer, and not return all reminders/tasking list in reponse just give pending tasks . 
 
 important Note:
  if user query come in hindi/urdu you must generate response in English/Roman urdu. can not directly urdu and hindi

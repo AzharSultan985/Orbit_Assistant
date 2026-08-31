@@ -2,7 +2,10 @@ import Conversation from "../Model/conversation.js"
 
 export const FetchConversation =async (req,res)=>{
 try {
-    const conversation = await  Conversation.find();
+      const conversation = await Conversation
+            .find()
+            .sort({ createdAt: -1 })
+            .limit(10);
     if (!conversation) {
     res.status(404).json({
         success:false,
