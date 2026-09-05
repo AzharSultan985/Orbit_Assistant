@@ -382,15 +382,11 @@ useEffect(()=>{
         loading,
         error,
         fetchSystemInfo,
-
         OrbitMode,
         setOrbitMode,
-
         MicEnabled,
         toggleMic,
-
         logs,
-
         // Socket message function
         sendOrbitMessage, orbitResponse, FetchConversation, messages, setMessages,orbitMaximized, setOrbitMaximized,HandleSaveTask,tasks,HandleFetchTasks
         ,HandleDeleteTask,setAlert,alert

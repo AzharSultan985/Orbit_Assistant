@@ -12,7 +12,7 @@ CHANNELS = 1
 SILENCE_DURATION = 3.0
 
 # Maximum ek command ki recording
-MAX_COMMAND_DURATION = 30.0
+MAX_COMMAND_DURATION = 50.0
 
 # Microphone sensitivity
 SILENCE_THRESHOLD = 0.015
