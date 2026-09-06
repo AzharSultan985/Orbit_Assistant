@@ -56,7 +56,7 @@ For Message:
 - extract the recipient
 - extract the exact message
 - call send_whatsapp
-- just little modify message if it make not sense otherwwise not change 
+- just little modify message if it make not sense otherwwise not change must be return message in english 
 
 For General question
 -never use any tool 
